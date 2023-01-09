@@ -2,14 +2,14 @@
 external help file: Microsoft.Azure.PowerShell.Cmdlets.Monitor.dll-Help.xml
 Module Name: Az.Monitor
 ms.assetid: A90564B5-57D7-48EB-976D-38C03D930289
-online version: https://docs.microsoft.com/powershell/module/az.monitor/add-azmetricalertrule
+online version: https://learn.microsoft.com/powershell/module/az.monitor/add-azmetricalertrule
 schema: 2.0.0
 ---
 
 # Add-AzMetricAlertRule
 
 ## SYNOPSIS
-Adds or updates a metric-based alert rule.
+Adds or updates a claasic metric-based alert rule (already retired on public cloud). To create a new metric alert rule, use the [Add-AzMetricAlertRuleV2](./Add-AzMetricAlertRuleV2.md) cmdlet.
 
 ## SYNTAX
 

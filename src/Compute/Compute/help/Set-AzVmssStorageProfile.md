@@ -20,7 +20,8 @@ Set-AzVmssStorageProfile [-VirtualMachineScaleSet] <PSVirtualMachineScaleSet>
  [[-OsDiskCreateOption] <String>] [-OsDiskDeleteOption <String>] [[-OsDiskOsType] <OperatingSystemTypes>]
  [[-Image] <String>] [[-VhdContainer] <String[]>] [-ImageReferenceId <String>] [-OsDiskWriteAccelerator]
  [-DiffDiskSetting <String>] [-DiffDiskPlacement <String>] [-ManagedDisk <String>]
- [-DiskEncryptionSetId <String>] [-DataDisk <VirtualMachineScaleSetDataDisk[]>] [-DiskControllerType <String>]
+ [-DiskEncryptionSetId <String>] [-DataDisk <VirtualMachineScaleSetDataDisk[]>] [-OSDiskSizeGB <Int32>]
+ [-DiskControllerType <String>] [-SecurityEncryptionType <String>] [-SecureVMDiskEncryptionSet <String>]
  [-DefaultProfile <IAzureContextContainer>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -332,6 +333,21 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
+### -OSDiskSizeGB
+Specifies the size of an empty data disk in gigabytes. This element can be used to overwrite the size of the disk in a virtual machine image.
+
+```yaml
+Type: System.Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
 ### -OsDiskWriteAccelerator
 Specifies whether WriteAccelerator should be enabled or disabled on the OS disk.
 
@@ -344,6 +360,36 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SecureVMDiskEncryptionSet
+ResourceId of the disk encryption set to use for enabling encryption at rest.
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SecurityEncryptionType
+Sets the SecurityEncryptionType of the virtual machine scale set. Possible values include: DiskWithVMGuestState, VMGuestStateOnly
+
+```yaml
+Type: System.String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
