@@ -18,6 +18,12 @@
         - Additional information about change #1
 -->
 ## Upcoming Release
+Fixed 'New-AzEventHubAuthorizationRuleSASToken' cmdlet which was returning wrong skn value
+
+## Version 3.2.0
+* Added NamespaceV2 cmdlets for EventHub
+
+## Version 3.1.0
 * Added readonly Status property in EventHub Namespace 
 
 ## Version 3.0.0

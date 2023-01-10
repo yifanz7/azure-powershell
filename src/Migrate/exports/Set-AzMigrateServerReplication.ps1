@@ -63,7 +63,7 @@ UPDATENICTAG <IVMwareCbtEnableMigrationInputTargetNicTags>: Specifies the tag to
 UPDATEVMTAG <IVMwareCbtEnableMigrationInputTargetVmtags>: Specifies the tag to be used for VM creation.
   [(Any) <String>]: This indicates any property can be added to this object.
 .Link
-https://docs.microsoft.com/powershell/module/az.migrate/set-azmigrateserverreplication
+https://learn.microsoft.com/powershell/module/az.migrate/set-azmigrateserverreplication
 #>
 function Set-AzMigrateServerReplication {
 [OutputType([Microsoft.Azure.PowerShell.Cmdlets.Migrate.Models.Api20220501.IJob])]
@@ -100,6 +100,12 @@ param(
     [System.String]
     # Updates the Virtual Network id within the destination Azure subscription to which the server needs to be migrated.
     ${TargetNetworkId},
+
+    [Parameter()]
+    [Microsoft.Azure.PowerShell.Cmdlets.Migrate.Category('Path')]
+    [System.String]
+    # Updates the Virtual Network id within the destination Azure subscription to which the server needs to be test migrated.
+    ${TestNetworkId},
 
     [Parameter()]
     [Microsoft.Azure.PowerShell.Cmdlets.Migrate.Category('Path')]
