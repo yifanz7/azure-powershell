@@ -219,8 +219,8 @@ function ValidBlob
 
     # check blob content is same as source
     $destblob = $b | Get-AzStorageBlobContent -Destination $localDestFile -Force
-    $srchash = [System.BitConverter]::ToString($md5.ComputeHash([System.IO.File]::ReadAllBytes($localSrcFile)))
-    $desthash = [System.BitConverter]::ToString($md5.ComputeHash([System.IO.File]::ReadAllBytes($localDestFile)))
+    $srchash = [System.BitConverter]::ToString($md5.ComputeHash([System.IO.File]::ReadAllBytes((Get-Location).ToString() + $localSrcFile.Substring(1))))
+    $desthash = [System.BitConverter]::ToString($md5.ComputeHash([System.IO.File]::ReadAllBytes((Get-Location).ToString() + $localSrcFile.Substring(1))))
     $srchash  | should -Be $desthash
 
     # check blob properties
