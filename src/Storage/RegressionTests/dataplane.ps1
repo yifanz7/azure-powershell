@@ -2,14 +2,14 @@
 
 BeforeAll {
     # Modify the path to your own
-    Import-Module $PSScriptRoot\utils.ps1
+    Import-Module .\utils.ps1
 
-    [xml]$config = Get-Content D:\code\azure-powershell\src\Storage\RegressionTests\config.xml
+    [xml]$config = Get-Content .\config.xml
     $globalNode = $config.SelectSingleNode("config/section[@id='global']")
     $testNode = $config.SelectSingleNode("config/section[@id='dataplane']")
 
-    $rootFolder = "C:\temp" # The folder should be created before tests 
-    cd $rootFolder
+    # $rootFolder = "C:\temp" # The folder should be created before tests 
+    # cd $rootFolder
 
     $resourceGroupName = $globalNode.resourceGroupName
     $storageAccountName = $testNode.SelectSingleNode("accountName[@id='1']").'#text'
@@ -26,11 +26,11 @@ BeforeAll {
     $ctx = New-AzStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey1
     $ctx2 = (Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName2).Context
 
-    $localSrcFile = "C:\temp\testfile_10240K_0" # The file needs to exist before tests, and the size should be 10240K 
-    $localSmallSrcFile = "C:\temp\testfile_1K_0" # The file needs to exist before tests, abd the size should be 1K
-    $localBigSrcFile = "C:\temp\testfile_300000K_0"# The file needs to exist before tests, and the size should be 300000K
+    $localSrcFile = ".\data\testfile_10240K_0" # The file needs to exist before tests, and the size should be 10240K 
+    $localSmallSrcFile = ".\data\testfile_1K_0" # The file needs to exist before tests, abd the size should be 1K
+    $localBigSrcFile = ".\data\testfile_300000K_0"# The file needs to exist before tests, and the size should be 300000K
     
-    $localDestFile = "C:\temp\test1.txt" # test will create the file
+    $localDestFile = ".\created\test1.txt" # test will create the file
     $containerName = GetRandomContainerName
 
     New-AzStorageContainer $containerName -Context $ctx
@@ -47,8 +47,8 @@ Describe "dataplane test" {
     It "Blob Version test" -Tag "blobversion" {
         $Error.Clear()
 
-        $localSrcFile = "C:\temp\testfile_2048K" #The file need exist before test, and should be 512 bytes aligned
-        $localDestFile = "C:\temp\testversion.txt" # test will create the file
+        $localSrcFile = ".\data\testfile_2048K" #The file need exist before test, and should be 512 bytes aligned
+        $localDestFile = ".\created\testversion.txt" # test will create the file
 
         $blobname = "aa.txt"
         $blobname2 = "bb.txt"
@@ -149,7 +149,7 @@ Describe "dataplane test" {
         $false  | should -be $blobsnapshot.BlobBaseClient.Exists().value
 
         #cleanup
-        #Remove-AzStorageContainer $containerName -Context $ctx -Force
+        # Remove-AzStorageContainer $containerName -Context $ctx -Force
         $Error.Count | should -be 0
 
     }
@@ -171,8 +171,8 @@ Describe "dataplane test" {
         $sas = New-AzStorageBlobSASToken -container $containerName -Blob test.txt -Permission w -Context $ctx
         $ctxsas = New-AzStorageContext -StorageAccountName $ctx.StorageAccountName -SasToken $sas
         $a = Set-AzStorageBlobContent -File $localSrcFile -Container $containerName -Blob test.txt -Force -Properties @{"ContentType" = "image/jpeg"; "ContentMD5" = "i727sP7HigloQDsqadNLHw=="} -Metadata @{"tag1" = "value1"; "tag2" = "value22" } -Context $ctxsas
-        $a = Set-AzStorageBlobContent -File testfile_2048K -Container $containerName -Blob test.txt -Force -Properties @{"ContentType" = "image/jpeg"; "ContentMD5" = "i727sP7HigloQDsqadNLHw=="} -Metadata @{"tag1" = "value1"; "tag2" = "value22" } -Context $ctxsas
-        $a = Set-AzStorageBlobContent -File .\testfile_2048K -Container $containerName -Blob test.txt -Force -Context $ctxsas -StandardBlobTier cool 
+        # upload blob with access tier
+        $a = Set-AzStorageBlobContent -File $localSrcFile -Container $containerName -Blob test.txt -Force -Context $ctx -StandardBlobTier cool 
         $a.ICloudBlob.Properties.StandardBlobTier | should -Be "Cool" 
         $b = Get-AzStorageContainer -Name $containerName -Context $ctx |Get-AzStorageBlob  
         $b.Count | Should -BeGreaterOrEqual 1
@@ -181,6 +181,7 @@ Describe "dataplane test" {
         $sas = New-AzStorageBlobSASToken -container $containerName -Blob test.txt -Permission w -Context $ctx
         $ctxsas = New-AzStorageContext -StorageAccountName $ctx.StorageAccountName -SasToken $sas.Substring(1)
         $bs = Get-AzStorageBlob -Container $containerName -Context $ctx
+        $bs[0].BlobType | Should -Not -Be $null 
         $bs[0].ListBlobProperties | should -Not -Be $null
         $bs[0].ListBlobProperties.Properties | should -Not -Be $null
         $bs[0].ListBlobProperties.Properties.BlobType | should -Not -Be $null
@@ -236,10 +237,10 @@ Describe "dataplane test" {
         # download blob
         Get-AzStorageBlobContent -Container $containerName -Blob test1.txt -Destination $localDestFile -Force -Context $ctx
         del $localDestFile
-        Get-AzStorageBlobContent -Container $containerName -Blob test1.txt -Destination test1.txt -Force -Context $ctx
+        Get-AzStorageBlobContent -Container $containerName -Blob test1.txt -Destination $localDestFile -Force -Context $ctx
         del $localDestFile
         Get-AzStorageBlobContent -Container $containerName -Blob test1.txt -Force -Context $ctx
-        del $localDestFile
+        del test1.txt
         $Error.Count | should -be 0
     }
 
@@ -302,7 +303,7 @@ Describe "dataplane test" {
         $t | wait-job
         $t.State | should -be "Completed" 
 
-        $t = Set-AzStorageBlobContent -File testfile_2048K -Container $containerName -Blob test.txt -Force -Context $ctx -asjob
+        $t = Set-AzStorageBlobContent -File .\data\testfile_2048K -Container $containerName -Blob test.txt -Force -Context $ctx -asjob
         $t | wait-job
         $t.State | should -be "Completed" 
 
@@ -313,7 +314,7 @@ Describe "dataplane test" {
         $t.State | should -be "Completed" 
 
         del $localDestFile
-        $t = Get-AzStorageBlobContent -Container $containerName -Blob test.txt -Destination test1.txt -Force -Context $ctx -asjob
+        $t = Get-AzStorageBlobContent -Container $containerName -Blob test.txt -Destination $localDestFile -Force -Context $ctx -asjob
         $t | wait-job
         $t.State | should -be "Completed"  
         del $localDestFile
@@ -350,7 +351,7 @@ Describe "dataplane test" {
         Get-AzStorageShare -Context $ctx
         Set-AzStorageShareQuota -ShareName $containerName -Quota 500 -Context $ctx
         New-AzStorageDirectory -ShareName $containerName -Path testdir -Context $ctx
-        Set-AzStorageFileContent -source testfile_2048K -ShareName $containerName -Path test.txt -Force -Context $ctx
+        Set-AzStorageFileContent -source .\data\testfile_2048K -ShareName $containerName -Path test.txt -Force -Context $ctx
         Set-AzStorageFileContent -source $localSrcFile -ShareName $containerName -Path test.txt   -PreserveSMBAttribute -Force -Context $ctx
         $file = Get-AzStorageFile -ShareName $containerName -Path test.txt -Context $ctx		
         $localFileProperties = Get-ItemProperty $localSrcFile
@@ -376,9 +377,9 @@ Describe "dataplane test" {
         Get-AzStorageFile -ShareName $containerName -Context $ctx
         Get-AzStorageFileContent -ShareName $containerName -Path test.txt -Destination $localDestFile -Force -Context $ctx
         del $localDestFile
-        Get-AzStorageFileContent -ShareName $containerName -Path test.txt -Destination test1.txt -Force -Context $ctx
+        Get-AzStorageFileContent -ShareName $containerName -Path test.txt -Destination $localDestFile -Force -Context $ctx
         del $localDestFile
-        Get-AzStorageFileContent -ShareName $containerName -Path test.txt -Destination .\test1.txt -Force -Context $ctx
+        Get-AzStorageFileContent -ShareName $containerName -Path test.txt -Destination $localDestFile -Force -Context $ctx
         del $localDestFile
         Get-AzStorageFileContent -ShareName $containerName -Path test1.txt -PreserveSMBAttribute -Force -Context $ctx
         $file = Get-AzStorageFile -ShareName $containerName -Context $ctx | ? {$_.Name -eq "test1.txt"}
@@ -387,11 +388,11 @@ Describe "dataplane test" {
         $localFileProperties.LastWriteTime.ToUniversalTime().Ticks | should -Be  $file[0].ListFileProperties.Properties.LastWrittenOn.ToUniversalTime().Ticks
         $localFileProperties.Attributes.ToString() | should -Be  $file[0].ListFileProperties.FileAttributes.ToString()
         
-       # $localFileProperties.CreationTime.ToUniversalTime().Ticks | should -Be $file[0].FileProperties.SmbProperties.FileCreatedOn.ToUniversalTime().Ticks
-       # $localFileProperties.LastWriteTime.ToUniversalTime().Ticks | should -Be  $file[0].FileProperties.SmbProperties.FileLastWrittenOn.ToUniversalTime().Ticks
-      #  $localFileProperties.Attributes.ToString() | should -Be  $file[0].FileProperties.SmbProperties.FileAttributes.ToString()
+        # $localFileProperties.CreationTime.ToUniversalTime().Ticks | should -Be $file[0].FileProperties.SmbProperties.FileCreatedOn.ToUniversalTime().Ticks
+        # $localFileProperties.LastWriteTime.ToUniversalTime().Ticks | should -Be  $file[0].FileProperties.SmbProperties.FileLastWrittenOn.ToUniversalTime().Ticks
+        # $localFileProperties.Attributes.ToString() | should -Be  $file[0].FileProperties.SmbProperties.FileAttributes.ToString()
 
-        del $localDestFile -Force
+        # del $localDestFile -Force
         $Error.Count | should -be 0
     }
 
@@ -403,7 +404,7 @@ Describe "dataplane test" {
         $t | wait-job
         $t.State | should -be "Completed"
 
-        $t = Set-AzStorageFileContent -source .\testfile_2048K -ShareName $containerName -Path test.txt -Force -Context $ctx -asjob
+        $t = Set-AzStorageFileContent -source .\data\testfile_2048K -ShareName $containerName -Path test.txt -Force -Context $ctx -asjob
         $t | wait-job
         $t.State | should -be "Completed"
 
@@ -414,7 +415,7 @@ Describe "dataplane test" {
         $t.State | should -be "Completed"
 
         del $localDestFile
-        $t = Get-AzStorageFileContent -ShareName $containerName -Path test.txt -Destination ..\temp\test1.txt  -Force -Context $ctx -asjob
+        $t = Get-AzStorageFileContent -ShareName $containerName -Path test.txt -Destination $localDestFile  -Force -Context $ctx -asjob
         $t | wait-job
         $t.State | should -be "Completed"
         del $localDestFile
@@ -632,10 +633,9 @@ Describe "dataplane test" {
             AllowedHeaders=@("x-ms-meta-target*","x-ms-meta-customheader");
             MaxAgeInSeconds=30;
             AllowedMethods=@("Put")})
-        sleep 20
+        sleep 30
         $rule = Get-AzStorageCORSRule -ServiceType table -Context $ctx
         $rule.count | should -be 2
-        2  | should -be  $rule.Count
         Remove-AzStorageCORSRule -ServiceType table -Context $ctx
         sleep 30  
         $rule = Get-AzStorageCORSRule -ServiceType table -Context $ctx
@@ -664,7 +664,6 @@ Describe "dataplane test" {
         get-AzStorageContainerStoredAccessPolicy -Container $containerName -Context $ctx 
 
         $Error.Count | should -be 0
-
     }
 
     It "Share access policy" -Tag "accesspolicy" {
@@ -780,10 +779,10 @@ Describe "dataplane test" {
     It "Upload Download FileTree" {
         $Error.Clear()
 
-        Upload_Download_BlobTree $ctx c:\temp 'Block'
-        Upload_Download_BlobTree $ctx c:\temp 'Page'
-        Upload_Download_BlobTree $ctx c:\temp 'Append'
-        Upload_Download_FileTree $ctx c:\temp
+        Upload_Download_BlobTree $ctx ((Get-Location).ToString()+"\data") 'Block'
+        Upload_Download_BlobTree $ctx ((Get-Location).ToString()+"\data") 'Page'
+        Upload_Download_BlobTree $ctx ((Get-Location).ToString()+"\data") 'Append'
+        Upload_Download_FileTree $ctx ((Get-Location).ToString()+"\data")
 
         $Error.Count | should -be 0
     }
@@ -1091,7 +1090,7 @@ Describe "dataplane test" {
         $accountName = $testNode.SelectSingleNode("accountName[@id='3']").'#text'
         $ctx = (Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountName).Context
 
-        $localSrcFile = "C:\temp\testfile_1K_0" 
+        $localSrcFile = ".\data\testfile_1K_0" 
         $filesystemName = "retestsoftdelete"
 
         # enable soft delete (on blob, also on hns)
@@ -1150,17 +1149,40 @@ Describe "dataplane test" {
         
         $blobTypes = @("Block", "Page", "Append")
 
-        $containerSAS = New-AzStorageContainerSASToken -Name $containerName -Permission  rwdl -ExpiryTime (Get-Date).AddDays(100) -Context $ctx
-        $sasctx = New-AzStorageContext -StorageAccountName $ctx.StorageAccountName -SasToken $containerSAS
+        $account1 = New-AzStorageAccount -ResourceGroupName $resourceGroupName -Name "testblobcopy1" -SkuName Standard_LRS -Location eastus2
+        $account2 = New-AzStorageAccount -ResourceGroupName $resourceGroupName -Name "testblobcopy2" -SkuName Standard_LRS -Location eastus2
+        
+        Update-AzStorageBlobServiceProperty -ResourceGroupName $resourceGroupName -StorageAccountName "testblobcopy1" -IsVersioningEnabled $true 
+
+        $ctx11 = (Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name "testblobcopy1").Context 
+        $ctx12 = (Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name "testblobcopy2").Context 
+
+        $ctxoauth11 = New-AzStorageContext -StorageAccountName "testblobcopy1"
+        $ctxoauth12 = New-AzStorageContext -StorageAccountName "testblobcopy2"
+
+        $containerSAS = New-AzStorageContainerSASToken -Name $containerName -Permission  rwdl -ExpiryTime (Get-Date).AddDays(100) -Context $ctx11
+        $sasctx = New-AzStorageContext -StorageAccountName $ctx11.StorageAccountName -SasToken $containerSAS
+
+        $blobCopySrcFile10M = ".\data\testfile_10M"
+        $blobCopySrcFile300M = ".\data\testfile_300M"
+
+        try {
+            Remove-AzStorageContainer -Name $containerName -Context $ctx11 -Force -ErrorAction Stop
+            Remove-AzStorageContainer -Name $containerName -Context $ctx12 -Force -ErrorAction Stop
+        } 
+        catch 
+        {
+            "Containers don't exist"
+        }
 
         # Create the containers and upload the src blobs 
-        if ($false) { 
-            New-AzStorageContainer -Name $containerName -Context $ctx
-            New-AzStorageContainer -Name $containerName -Context $ctx2
+        if ($true) { 
+            New-AzStorageContainer -Name $containerName -Context $ctx11
+            New-AzStorageContainer -Name $containerName -Context $ctx12
 
             foreach ($srcType in $blobTypes) {
-                $smallSrcBlob = Set-AzStorageBlobContent -File $blobCopySrcFile10M -Container $containerName -Blob "$($srctype)SmallSource" -Context $ctx -BlobType $srctype -Properties @{"ContentType" = "image/jpeg"} -Metadata @{"tag1" = "value1"; "tag2" = "value2"}
-                $largeSrcBlob = Set-AzStorageBlobContent -File $localBigSrcFile -Container $containerName -Blob "$($srctype)LargeSource" -Context $ctx -BlobType $srctype -Properties @{"ContentType" = "image/jpeg"} -Metadata @{"tag1" = "value1"; "tag2" = "value2"}
+                $smallSrcBlob = Set-AzStorageBlobContent -File $blobCopySrcFile10M -Container $containerName -Blob "$($srctype)SmallSource" -Context $ctx11 -BlobType $srctype -Properties @{"ContentType" = "image/jpeg"} -Metadata @{"tag1" = "value1"; "tag2" = "value2"} -Force
+                $largeSrcBlob = Set-AzStorageBlobContent -File $blobCopySrcFile300M -Container $containerName -Blob "$($srctype)LargeSource" -Context $ctx11 -BlobType $srctype -Properties @{"ContentType" = "image/jpeg"} -Metadata @{"tag1" = "value1"; "tag2" = "value2"} -Force
             }
         }
         
@@ -1168,16 +1190,18 @@ Describe "dataplane test" {
         foreach ($srcType in $blobTypes) {
             foreach ($destType in $blobTypes) { 
                 # Small src file. Key ctx
-                $smallDestBlob = Copy-AzStorageBlob -SrcContainer $containerName -SrcBlob "$($srctype)SmallSource" -Context $ctx -DestContainer $containerName -DestBlob "$($srcType)TO$($destType)SmallDest" -DestContext $ctx2 -DestBlobType $destType -Force
+                $smallDestBlob = Copy-AzStorageBlob -SrcContainer $containerName -SrcBlob "$($srctype)SmallSource" -Context $ctx11 -DestContainer $containerName -DestBlob "$($srcType)TO$($destType)SmallDest" -DestContext $ctx12 -DestBlobType $destType -Force
                 $smallDestBlob.Name | Should -Be "$($srctype)TO$($desttype)SmallDest"
                 $smallDestBlob.BlobProperties.ContentType | Should -Be "image/jpeg"
                 $smallDestBlob.BlobProperties.ContentLength | Should -Be (Get-Item $blobCopySrcFile10M).Length
                 $smallDestBlob.BlobProperties.Metadata.Count | Should -Be 2 
-                $smallDestBlob.BlobBaseClient.AccountName | Should -Be $storageAccountName2
+                $smallDestBlob.BlobBaseClient.AccountName | Should -Be "testblobcopy2"
 
                 # compare content 
                 $smallDestBlob | Get-AzStorageBlobContent -Destination $localDestFile -Force 
-                CompareFileMD5 $localBigSrcFile $localDestFile
+                $path1 = (Get-Location).ToString()+$blobCopySrcFile10M
+                $path2 = (Get-Location).ToString()+$localDestFile
+                CompareFileMD5 $path1 $path2
                 del $localDestFile
                 $smallDestBlob | Remove-AzStorageBlob
 
@@ -1186,51 +1210,55 @@ Describe "dataplane test" {
                 $smallDestBlob2.Name | Should -Be "$($srctype)TO$($desttype)SmallDest2"
                 $smallDestBlob2.BlobProperties.ContentType | Should -Be "image/jpeg"
                 $smallDestBlob2.BlobProperties.ContentLength | Should -Be (Get-Item $blobCopySrcFile10M).Length
-                $smallDestBlob2.BlobProperties.Metadata | Should -Be 2 
-                $smallDestBlob2.BlobBaseClient.AccountName | Should -Be $storageAccountName
+                $smallDestBlob2.BlobProperties.Metadata.Count | Should -Be 2 
+                $smallDestBlob2.BlobBaseClient.AccountName | Should -Be "testblobcopy1"
                 
                 $smallDestBlob2 | Get-AzStorageBlobContent -Destination $localDestFile -Force 
-                CompareFileMD5 $localBigSrcFile $localDestFile
+                CompareFileMD5 $path1 $path2
                 del $localDestFile
                 $smallDestBlob2 | Remove-AzStorageBlob
 
                 # Small src file. oauth ctx 
-                $smallDestBlob3 = Copy-AzStorageBlob -SrcContainer $containerName -SrcBlob "$($srctype)SmallSource" -Context $ctxoauth1 -DestContainer $containerName -DestBlob "$($srcType)TO$($destType)SmallDest3" -DestContext $ctxoauth2  -DestBlobType $destType -Force
+                $smallDestBlob3 = Copy-AzStorageBlob -SrcContainer $containerName -SrcBlob "$($srctype)SmallSource" -Context $ctxoauth11 -DestContainer $containerName -DestBlob "$($srcType)TO$($destType)SmallDest3" -DestContext $ctxoauth12  -DestBlobType $destType -Force
                 $smallDestBlob3.Name | Should -Be "$($srctype)TO$($desttype)SmallDest3"
                 $smallDestBlob3.BlobProperties.ContentType | Should -Be "image/jpeg"
                 $smallDestBlob3.BlobProperties.ContentLength | Should -Be (Get-Item $blobCopySrcFile10M).Length
-                $smallDestBlob3.BlobProperties.Metadata | Should -Be 2 
-                $smallDestBlob3.BlobBaseClient.AccountName | Should -Be $storageAccountName2
+                $smallDestBlob3.BlobProperties.Metadata.Count | Should -Be 2 
+                $smallDestBlob3.BlobBaseClient.AccountName | Should -Be "testblobcopy2"
 
                 $smallDestBlob3 | Get-AzStorageBlobContent -Destination $localDestFile -Force 
-                CompareFileMD5 $localBigSrcFile $localDestFile
+                CompareFileMD5 $path1 $path2
                 del $localDestFile
                 $smallDestBlob3 | Remove-AzStorageBlob
 
-                $largeDestBlob = Copy-AzStorageBlob -SrcContainer $containerName -SrcBlob "$($srcType)BigSource" -Context $ctx -DestContainer $containerName -DestBlob "$($srcType)TO$($destType)BigDest" -DestContext $ctxoauth1 -DestBlobType $destType -Force
+                $largeDestBlob = Copy-AzStorageBlob -SrcContainer $containerName -SrcBlob "$($srcType)LargeSource" -Context $ctx11 -DestContainer $containerName -DestBlob "$($srcType)TO$($destType)BigDest" -DestContext $ctxoauth11 -DestBlobType $destType -Force
                 $largeDestBlob.Name | Should -Be "$($srcType)TO$($destType)BigDest"
                 $largeDestBlob.BlobProperties.ContentType | Should -Be "image/jpeg"
-                $largeDestBlob.BlobProperties.ContentLength | Should -Be (Get-Item $blobCopySrcFile10M).Length
-                $largeDestBlob.BlobProperties.Metadata | Should -Be 2 
-                $largeDestBlob.BlobBaseClient.AccountName | Should -Be $storageAccountName
+                $largeDestBlob.BlobProperties.ContentLength | Should -Be (Get-Item $blobCopySrcFile300M).Length
+                $largeDestBlob.BlobProperties.Metadata.Count | Should -Be 2 
+                $largeDestBlob.BlobBaseClient.AccountName | Should -Be "testblobcopy1"
 
                 $largeDestBlob | Get-AzStorageBlobContent -Destination $localDestFile -Force 
-                CompareFileMD5 $localBigSrcFile $localDestFile
+                $path1 = (Get-Location).ToString()+$blobCopySrcFile300M
+                CompareFileMD5 $path1 $path2
                 del $localDestFile
                 $largeDestBlob | Remove-AzStorageBlob
             }
         }
 
         # Block to block with access tier and rehydrate priority set 
-        $blockToBlock1 = Copy-AzStorageBlob -SrcContainer $containerName -SrcBlob "BlockSmallSource" -Context $ctx -DestContainer $containerName -DestBlob "BlockToBlockWithAccessTier" -DestContext $ctx2 -DestBlobType $destType -StandardBlobTier "Cool" -RehydratePriority High -Force
+        $blockToBlock1 = Copy-AzStorageBlob -SrcContainer $containerName -SrcBlob "BlockSmallSource" -Context $ctx11 -DestContainer $containerName -DestBlob "BlockToBlockWithAccessTier" -DestContext $ctx12 -DestBlobType Block -StandardBlobTier "Cool" -RehydratePriority High -Force
         $blockToBlock1.AccessTier | Should -Be "Cool"
 
         # blob version 
-        $smallSrcBlob = Set-AzStorageBlobContent -File $blobCopySrcFile10M -Container $containerName -Blob "$($srctype)SmallSource" -Context $ctx -BlobType $srctype -Properties @{"ContentType" = "image/jpeg"} -Metadata @{"tag1" = "value1"; "tag2" = "value2"}
-        $blobs = Get-AzStorageBlob -Container $containerName -Context $ctx -IncludeVersion
-        $blobVersion = $blob[1]
-        $destBlob = $blobVersion | Copy-AzStorageBlob -DestBlob "blobVersionToBlock" -DestBlobType Block -DestContext $ctx2 -Force
+        $smallSrcBlob = Set-AzStorageBlobContent -File $blobCopySrcFile10M -Container $containerName -Blob "$($srctype)SmallSource" -Context $ctx11 -BlobType $srctype -Properties @{"ContentType" = "image/jpeg"} -Metadata @{"tag1" = "value1"; "tag2" = "value2"} -Force
+        $blobs = Get-AzStorageBlob -Container $containerName -Context $ctx11 -IncludeVersion -Prefix "$($srctype)SmallSource"
+        $blobVersion = $blobs[1]
+        $destBlob = $blobVersion | Copy-AzStorageBlob -DestContainer $containerName -DestBlob "blobVersionToBlock" -DestBlobType Block -DestContext $ctx12 -Force
         $destBlob.Name | Should -Be "blobVersionToBlock"
+
+        Remove-AzStorageAccount -ResourceGroupName $resourceGroupName -Name "testblobcopy1" -Force
+        Remove-AzStorageAccount -ResourceGroupName $resourceGroupName -Name "testblobcopy2" -Force
 
         $Error.Count | should -be 0
     }
@@ -1276,7 +1304,7 @@ Describe "dataplane test" {
 
         ### Delete 
         $share2 = Get-AzStorageShare -Name $shareName2 -Context $ctx
-        Set-AzStorageFileContent  -ShareName $shareName2 -Source C:\temp\1.txt -Path testfile -Context $ctx -Force
+        Set-AzStorageFileContent  -ShareName $shareName2 -Source $localSrcFile -Path testfile -Context $ctx -Force
 
         Remove-AzStorageShare -Share $share2.CloudFileShare -Force 
         $share2.ShareClient.Exists().Value | should -be $false
@@ -1604,8 +1632,6 @@ Describe "dataplane test" {
         $f | Get-AzStorageFileCopyState -WaitForComplete
         $f.ShareFileClient.AccountName | should -be $ctx2.StorageAccountName
         $f.ShareFileClient.Path | should -be "dir1/copydest"
-
-
 
         # Get copy state
         ## Prepare a big blob
