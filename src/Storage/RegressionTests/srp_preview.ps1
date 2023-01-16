@@ -142,10 +142,23 @@ Describe "Management plan test - preview" {
         $a = Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameFailover -IncludeGeoReplicationStats
         $a.GeoReplicationStats
 
-        $taskfailover = Invoke-AzStorageAccountFailover -ResourceGroupName $rgname -Name $accountNameFailover -FailoverType Planned -Force -debug
+        $taskfailover = Invoke-AzStorageAccountFailover -ResourceGroupName $rgname -Name $accountNameFailover -FailoverType Planned -Force -AsJob
         $taskfailover | Wait-Job
-        # TODO: Add validations
+
         $a = Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameFailover
+        $a.Sku.Name | Should -Be "Standard_RAGRS"
+        $a.PrimaryLocation | Should -Be "centraluseuap"
+        $a.SecondaryLocation | Should -Be "eastus2euap"
+
+        $taskfailover = Invoke-AzStorageAccountFailover -ResourceGroupName $rgname -Name $accountNameFailover -FailoverType Unplanned -Force -AsJob
+        $taskfailover | Wait-Job
+
+        $a = Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameFailover
+        $a.Sku.Name | Should -Be "Standard_LRS"
+        $a.PrimaryLocation | Should -Be "eastus2euap"
+        $a.SecondaryLocation | Should -Be $null 
+
+        Remove-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameFailover -Force
     }
     
     It "TODO" {
