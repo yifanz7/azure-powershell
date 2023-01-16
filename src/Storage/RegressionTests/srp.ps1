@@ -1334,13 +1334,31 @@ Describe "Management plan test" {
         Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameEncypScope | New-AzStorageEncryptionScope  -EncryptionScopeName $scopename -KeyvaultEncryption -KeyUri $KeyUri
 
         #get single scope
-        Get-AzStorageEncryptionScope -ResourceGroupName $rgname -StorageAccountName $accountNameEncypScope -EncryptionScopeName $scopename
-
-        Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameEncypScope | Get-AzStorageEncryptionScope -EncryptionScopeName $scopename
+        $scope = Get-AzStorageEncryptionScope -ResourceGroupName $rgname -StorageAccountName $accountNameEncypScope -EncryptionScopeName $scopename
+        $scope.Name | Should -Be $scopename
+        
+        $scope = Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameEncypScope | Get-AzStorageEncryptionScope -EncryptionScopeName $scopename
+        $scope.Name | Should -Be $scopename
 
         #list scope, will list all scopes
-        Get-AzStorageEncryptionScope -ResourceGroupName $rgname -StorageAccountName $accountNameEncypScope 
-        Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameEncypScope | Get-AzStorageEncryptionScope 
+        $scope3 = New-AzStorageEncryptionScope -ResourceGroupName $rgname -StorageAccountName $accountNameEncypScope -EncryptionScopeName testscope3 -StorageEncryption
+        $scope4 = New-AzStorageEncryptionScope -ResourceGroupName $rgname -StorageAccountName $accountNameEncypScope -EncryptionScopeName testscope4 -StorageEncryption
+        $scopes = Get-AzStorageEncryptionScope -ResourceGroupName $rgname -StorageAccountName $accountNameEncypScope 
+        $scopes.Count | Should -Be 4 
+        $scopes = Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameEncypScope | Get-AzStorageEncryptionScope
+        $scopes.Count | Should -Be 4 
+        
+        #list with include, filter, and maxpagesize 
+        Update-AzStorageEncryptionScope -ResourceGroupName $rgname -StorageAccountName $accountNameEncypScope -EncryptionScopeName testscope3 -State Disabled
+        $scopes = Get-AzStorageEncryptionScope -ResourceGroupName $rgname -StorageAccountName $accountNameEncypScope -MaxPageSize 10 -Include Disabled
+        $scopes.Count | Should -Be 1 
+        $scopes = Get-AzStorageEncryptionScope -ResourceGroupName $rgname -StorageAccountName $accountNameEncypScope -MaxPageSize 2 -Include Enabled -Filter "startswith(name, test)"
+        $scopes.Count | Should -Be 2
+        ($scopes | ?{$_.Name -like "test*"}).Count | Should -Be 2 
+        ($scopes | ?{$_.State -like "Enabled"}).Count | Should -Be 2
+        $scopes = Get-AzStorageEncryptionScope -ResourceGroupName $rgname -StorageAccountName $accountNameEncypScope -MaxPageSize 20 -Include All -Filter "startswith(name, test)"
+        $scopes.Count | Should -Be 3
+        ($scopes | ?{$_.Name -like "test*"}).Count | Should -Be 3 
 
         # Set to Disabled.
         ### Move the encryption scope to CMK by passing { 'properties': { 'state':'Disabled' } }
@@ -1710,11 +1728,11 @@ Describe "Management plan test" {
         $rule2 = New-AzStorageBlobInventoryPolicyRule -Name Test2 -Destination $containerName -Format Parquet -Schedule Weekly  -BlobType blockBlob -PrefixMatch aaa,bbb -BlobSchemaField name,Last-Modified,Metadata,LastAccessTime,AccessTierInferred #,Tags
         $rule3 = New-AzStorageBlobInventoryPolicyRule -Name Test3 -Destination $containerName -Format Parquet -Schedule Daily  -IncludeSnapshot -BlobType blockBlob,appendBlob -PrefixMatch aaa,bbb `
                 -BlobSchemaField name,Creation-Time,Last-Modified,Content-Length,Content-MD5,BlobType,AccessTier,AccessTierChangeTime,Expiry-Time,hdi_isfolder,Owner,Group,Permissions,Acl,Metadata,LastAccessTime 
-        # $rule4 = New-AzStorageBlobInventoryPolicyRule -Name Test4 -Destination $containerName -Disabled -Format Csv -Schedule Weekly -BlobSchemaField Name,BlobType,Content-Length,Creation-Time -BlobType blockBlob -IncludeBlobVersion
+        $rule4 = New-AzStorageBlobInventoryPolicyRule -Name Test4 -Destination $containerName -Format Csv -Schedule Weekly -BlobType blockBlob -ExcludePrefix prefix1,prefix2 -IncludeDeleted -BlobSchemaField Name,Content-CRC64,Content-Type,LeaseStatus,EncryptionScope,DeletionId,Deleted,DeletedTime,RemainingRetentionDays
 
-        $policy = Set-AzStorageBlobInventoryPolicy -ResourceGroupName $rgname  -StorageAccountName $accountNameBlobInv  -Disabled -Rule $rule1,$rule2,$rule3
+        $policy = Set-AzStorageBlobInventoryPolicy -ResourceGroupName $rgname  -StorageAccountName $accountNameBlobInv  -Disabled -Rule $rule1,$rule2,$rule3,$rule4
         $policy.Enabled | should -Be $false
-        $policy.Rules.Count | should -be 3
+        $policy.Rules.Count | should -be 4
         $policy.Rules[0].Name | should -be "Test1"
         $policy.Rules[0].Enabled | should -Be $false
         $policy.Rules[0].Destination | should -Be $containerName
@@ -1748,11 +1766,19 @@ Describe "Management plan test" {
         $policy.Rules[2].Definition.Filters.IncludeSnapshots | should -Be $true
         $policy.Rules[2].Definition.Filters.BlobTypes.Count | should -be 2
         $policy.Rules[2].Definition.Filters.PrefixMatch.Count | should -be 2
+        $policy.Rules[3].Name | Should -Be "Test4"
+        $policy.Rules[3].Enabled | Should -Be $true 
+        $policy.Rules[3].Destination | Should -Be $containerName
+        $policy.Rules[3].Definition.Format | Should -Be Csv 
+        $policy.Rules[3].Definition.Schedule | Should -Be Weekly 
+        $policy.Rules[3].Definition.Filters.ExcludePrefix.Count | Should -Be 2 
+        $policy.Rules[3].Definition.Filters.IncludeDeleted | Should -Be $true 
+        $policy.Rules[3].Definition.SchemaFields.Count | Should -Be 9
         $policy = $null
 
         $policy = Get-AzStorageBlobInventoryPolicy -ResourceGroupName $rgname  -StorageAccountName $accountNameBlobInv 
         $policy.Enabled | should -Be $false
-        $policy.Rules.Count | should -be 3
+        $policy.Rules.Count | should -be 4
         $policy.Rules[0].Name | should -be "Test1"
         $policy.Rules[0].Enabled | should -Be $false
         $policy.Rules[0].Destination | should -Be $containerName
@@ -1786,6 +1812,14 @@ Describe "Management plan test" {
         $policy.Rules[2].Definition.Filters.IncludeSnapshots | should -Be $true
         $policy.Rules[2].Definition.Filters.BlobTypes.Count | should -be 2
         $policy.Rules[2].Definition.Filters.PrefixMatch.Count | should -be 2
+        $policy.Rules[3].Name | Should -Be "Test4"
+        $policy.Rules[3].Enabled | Should -Be $true 
+        $policy.Rules[3].Destination | Should -Be $containerName
+        $policy.Rules[3].Definition.Format | Should -Be Csv 
+        $policy.Rules[3].Definition.Schedule | Should -Be Weekly 
+        $policy.Rules[3].Definition.Filters.ExcludePrefix.Count | Should -Be 2 
+        $policy.Rules[3].Definition.Filters.IncludeDeleted | Should -Be $true 
+        $policy.Rules[3].Definition.SchemaFields.Count | Should -Be 9
         $policy = $null
 
         $removeSuccess = Remove-AzStorageBlobInventoryPolicy -ResourceGroupName $rgname  -StorageAccountName $accountNameBlobInv  -PassThru
@@ -1847,10 +1881,28 @@ Describe "Management plan test" {
                             PrefixMatch=@("conpre1","conpre2");
                         })
                     })
-                })
+                },
+                @{
+                    Enabled=$false;
+                    Name="Test3";
+                    Destination=$containerName;
+                    Definition=(@{
+                        ObjectType="Blob";
+                        Format="Parquet";
+                        Schedule="Daily";
+                        SchemaFields=@("name","Metadata","DeletionId","Deleted","DeletedTime","RemainingRetentionDays","Content-CRC64","Content-Type","LeaseStatus","EncryptionScope");
+                        Filters=(@{
+                            BlobTypes=@("blockBlob","appendBlob");
+                            PrefixMatch=@("conpre1","conpre2");
+                            ExcludePrefix=@("prefix1","prefix2");
+                            IncludeDeleted=$true;
+                        })
+                    })
+                }
+                )
             })
         $policy.Enabled | should -Be $true
-        $policy.Rules.Count | should -be 2
+        $policy.Rules.Count | should -be 3
         $policy.Rules[0].Name | should -be "Test1"
         $policy.Rules[0].Enabled | should -Be $true
         $policy.Rules[0].Destination | should -Be $containerName
@@ -1873,12 +1925,22 @@ Describe "Management plan test" {
         $policy.Rules[1].Definition.Filters.IncludeSnapshots | should -Be $null
         $policy.Rules[1].Definition.Filters.BlobTypes| should -be $null
         $policy.Rules[1].Definition.Filters.PrefixMatch.Count | should -be 2
+        $policy.Rules[2].Name | Should -Be "Test3"
+        $policy.Rules[2].Enabled | Should -Be $false 
+        $policy.Rules[2].Definition.ObjectType | Should -Be Blob 
+        $policy.Rules[2].Definition.Format | Should -Be Parquet
+        $policy.Rules[2].Definition.Schedule | Should -Be Daily 
+        $policy.Rules[2].Definition.SchemaFields.Count | Should -Be 10 
+        $policy.Rules[2].Definition.Filters.ExcludePrefix.Count | Should -Be 2 
+        $policy.Rules[2].Definition.Filters.IncludeDeleted | Should -Be $true 
+        $policy.Rules[2].Definition.Filters.IncludeBlobVersions | Should -Be $null
+        $policy.Rules[2].Definition.Filters.IncludeSnapshots | Should -Be $null
         $policy = $null
 
         #policy pipeline
         $policy = Get-AzStorageBlobInventoryPolicy -ResourceGroupName $rgname  -StorageAccountName $accountNameBlobInv | Set-AzStorageBlobInventoryPolicy -ResourceGroupName $rgname  -StorageAccountName $accountNameBlobInv 
         $policy.Enabled | should -Be $true
-        $policy.Rules.Count | should -be 2
+        $policy.Rules.Count | should -be 3
         $policy.Rules[0].Name | should -be "Test1"
         $policy.Rules[0].Enabled | should -Be $true
         $policy.Rules[0].Destination | should -Be $containerName
@@ -1901,10 +1963,20 @@ Describe "Management plan test" {
         $policy.Rules[1].Definition.Filters.IncludeSnapshots | should -Be $null
         $policy.Rules[1].Definition.Filters.BlobTypes| should -be $null
         $policy.Rules[1].Definition.Filters.PrefixMatch.Count | should -be 2
+        $policy.Rules[2].Name | Should -Be "Test3"
+        $policy.Rules[2].Enabled | Should -Be $false 
+        $policy.Rules[2].Definition.ObjectType | Should -Be Blob 
+        $policy.Rules[2].Definition.Format | Should -Be Parquet
+        $policy.Rules[2].Definition.Schedule | Should -Be Daily 
+        $policy.Rules[2].Definition.SchemaFields.Count | Should -Be 10 
+        $policy.Rules[2].Definition.Filters.ExcludePrefix.Count | Should -Be 2 
+        $policy.Rules[2].Definition.Filters.IncludeDeleted | Should -Be $true 
+        $policy.Rules[2].Definition.Filters.IncludeBlobVersions | Should -Be $null
+        $policy.Rules[2].Definition.Filters.IncludeSnapshots | Should -Be $null
         $policy = $null
         $policy = ,((Get-AzStorageBlobInventoryPolicy -ResourceGroupName $rgname  -StorageAccountName $accountNameBlobInv).Rules) | Set-AzStorageBlobInventoryPolicy -ResourceGroupName $rgname  -StorageAccountName $accountNameBlobInv -Disabled
         $policy.Enabled | should -Be $false
-        $policy.Rules.Count | should -be 2
+        $policy.Rules.Count | should -be 3
         $policy.Rules[0].Name | should -be "Test1"
         $policy.Rules[0].Enabled | should -Be $true
         $policy.Rules[0].Destination | should -Be $containerName
@@ -1927,6 +1999,16 @@ Describe "Management plan test" {
         $policy.Rules[1].Definition.Filters.IncludeSnapshots | should -Be $null
         $policy.Rules[1].Definition.Filters.BlobTypes| should -be $null
         $policy.Rules[1].Definition.Filters.PrefixMatch.Count | should -be 2
+        $policy.Rules[2].Name | Should -Be "Test3"
+        $policy.Rules[2].Enabled | Should -Be $false 
+        $policy.Rules[2].Definition.ObjectType | Should -Be Blob 
+        $policy.Rules[2].Definition.Format | Should -Be Parquet
+        $policy.Rules[2].Definition.Schedule | Should -Be Daily 
+        $policy.Rules[2].Definition.SchemaFields.Count | Should -Be 10 
+        $policy.Rules[2].Definition.Filters.ExcludePrefix.Count | Should -Be 2 
+        $policy.Rules[2].Definition.Filters.IncludeDeleted | Should -Be $true 
+        $policy.Rules[2].Definition.Filters.IncludeBlobVersions | Should -Be $null
+        $policy.Rules[2].Definition.Filters.IncludeSnapshots | Should -Be $null
         $policy = $null
         Get-AzStorageBlobInventoryPolicy -ResourceGroupName $rgname  -StorageAccountName $accountNameBlobInv | Remove-AzStorageBlobInventoryPolicy       
         
