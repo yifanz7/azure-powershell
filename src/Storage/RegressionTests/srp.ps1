@@ -1222,7 +1222,7 @@ Describe "Management plan test" {
         $properties = Get-AzStorageBlobServiceProperty -ResourceGroupName $rgname -StorageAccountName $accountNamePITR 
         $properties.RestorePolicy.Enabled | should -Be $false
         
-        Remove-AzStorageAccount -ResourceGroupName $globalNode.resourceGroupName -Name $accountNamePITR -Force
+        Remove-AzStorageAccount -ResourceGroupName $globalNode.resourceGroupName -Name $accountNamePITR -Force -AsJob
 
         $Error.Clear()
         $Error.Count | should -be 0
