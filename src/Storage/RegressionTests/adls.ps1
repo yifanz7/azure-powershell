@@ -5,7 +5,7 @@ BeforeAll {
     # Modify the path to your own
     Import-Module .\utils.ps1
 
-    [xml]$config = [xml]$config = Get-Content .\config.xml
+    [xml]$config = Get-Content .\config.xml
     $globalNode = $config.SelectSingleNode("config/section[@id='global']")
     $testNode = $config.SelectSingleNode("config/section[@id='adls']")
 
