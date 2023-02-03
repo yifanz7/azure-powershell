@@ -1,9 +1,9 @@
 ﻿# Invoke-Pester C:\Users\weiwei\Desktop\PSH_Script\PSHTest\dataplane.ps1 -Show All -Strict -ExcludeTagFilter "Preview" 
 
 BeforeAll {
-    Import-Module D:\code\azure-powershell\src\Storage\RegressionTests\utils.ps1
+    Import-Module .\utils.ps1
 
-    [xml]$config = Get-Content D:\code\azure-powershell\src\Storage\RegressionTests\config.xml
+    [xml]$config = Get-Content .\config.xml
     $globalNode = $config.SelectSingleNode("config/section[@id='global']")
     $testNode = $config.SelectSingleNode("config/section[@id='srp']")
 

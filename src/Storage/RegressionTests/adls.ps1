@@ -3,22 +3,22 @@
 
 BeforeAll {
     # Modify the path to your own
-    Import-Module $PSScriptRoot\utils.ps1
+    Import-Module .\utils.ps1
 
-    [xml]$config = Get-Content D:\code\azure-powershell\src\Storage\RegressionTests\config.xml
+    [xml]$config = [xml]$config = Get-Content .\config.xml
     $globalNode = $config.SelectSingleNode("config/section[@id='global']")
     $testNode = $config.SelectSingleNode("config/section[@id='adls']")
 
     # Create the directory C:\temp locally before tests 
-    $rootFolder = "C:\temp"
-    cd $rootFolder
+    #$rootFolder = "C:\temp"
+    #cd $rootFolder
 
     $rgname = $globalNode.resourceGroupName
     $accountName = $testNode.accountName
     $ctx = (Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountName).Context
 
-    $localSrcFile = "C:\temp\testfile_1K_0" #The file need exist before test, and should be 512 bytes aligned
-    $localDestFile = "C:\temp\test1.txt" # test will create the file
+    $localSrcFile = ".\data\testfile_1024K_0" #The file need exist before test, and should be 512 bytes aligned
+    $localDestFile = ".\created\test1.txt" # test will create the file
     $filesystemName = "filesystem1"
     $dirname1 = "dir1"
     $dirname2 = "dir2/"

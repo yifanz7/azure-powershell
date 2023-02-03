@@ -33,9 +33,9 @@ function ResetFileToSuccess
 
 BeforeAll {
     # Modify the path to your own
-    Import-Module $PSScriptRoot\utils.ps1
+    Import-Module .\utils.ps1
     
-    [xml]$config = Get-Content D:\code\azure-powershell\src\Storage\RegressionTests\config.xml
+    [xml]$config = [xml]$config = Get-Content .\config.xml
     $globalNode = $config.SelectSingleNode("config/section[@id='global']")
     $testNode = $config.SelectSingleNode("config/section[@id='adlsSetAcl']")
     
@@ -44,13 +44,13 @@ BeforeAll {
     Add-AzAccount -ServicePrincipal -Tenant $globalNode.tenantId -SubscriptionId $globalNode.subscriptionId -Credential $cred 
 
     $resourceGroupName = $globalNode.resourceGroupName
-    $storageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $resourceGroupName -Name $testNode.accountName)[0].Value
+    $storageAccountKey = $testNode.accountKey
 
     $ctx = New-AzStorageContext  $testNode.accountName -StorageAccountKey $storageAccountKey
     $ctx2 = New-AzStorageContext  $testNode.accountName
 
     $filesystemName = "adlstest2"
-    $localSrcFile = "C:\temp\testfile_1K_0" #The file needs to exist before tests, and should be 512 bytes aligned
+    $localSrcFile = ".\data\testfile_1024K_0" #The file needs to exist before tests, and should be 512 bytes aligned
     $id = $globalNode.applicationId
 
     # for lease blob to make set acl recusive fail

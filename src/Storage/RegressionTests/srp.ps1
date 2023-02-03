@@ -1222,7 +1222,7 @@ Describe "Management plan test" {
         $properties = Get-AzStorageBlobServiceProperty -ResourceGroupName $rgname -StorageAccountName $accountNamePITR 
         $properties.RestorePolicy.Enabled | should -Be $false
         
-        Remove-AzStorageAccount -ResourceGroupName $globalNode.resourceGroupName -Name $accountNamePITR
+        Remove-AzStorageAccount -ResourceGroupName $globalNode.resourceGroupName -Name $accountNamePITR -Force
 
         $Error.Clear()
         $Error.Count | should -be 0
@@ -1233,7 +1233,7 @@ Describe "Management plan test" {
 
         $shareName1 = "test01"
         $shareName2 = "test02"
-        $accountNameSSD = $accountName + "sharesoftdel"
+        $accountNameSSD = $accountName + "sdel"
 
         New-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameSSD -SkuName Standard_LRS -Location eastus 
 
