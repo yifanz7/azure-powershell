@@ -50,7 +50,7 @@ BeforeAll {
     $ctx2 = New-AzStorageContext  $testNode.accountName
 
     $filesystemName = "adlstest2"
-    $localSrcFile = ".\data\testfile_1024K_0" #The file needs to exist before tests, and should be 512 bytes aligned
+    $localSrcFile = ".\data\testfile_1K_0" #The file needs to exist before tests, and should be 512 bytes aligned
     $id = $globalNode.applicationId
 
     # for lease blob to make set acl recusive fail

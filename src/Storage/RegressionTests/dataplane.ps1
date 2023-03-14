@@ -28,7 +28,7 @@ BeforeAll {
 
     $localSrcFile = ".\data\testfile_10240K_0" # The file needs to exist before tests, and the size should be 10240K 
     $localSmallSrcFile = ".\data\testfile_1K_0" # The file needs to exist before tests, abd the size should be 1K
-    $localBigSrcFile = ".\data\testfile_300000K_0"# The file needs to exist before tests, and the size should be 300000K
+    $localBigSrcFile = ".\data\testfile_300M" # The file needs to exist before tests, and the size should be 300000K
     
     $localDestFile = ".\created\test1.txt" # test will create the file
     $containerName = GetRandomContainerName

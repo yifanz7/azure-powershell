@@ -1,20 +1,18 @@
 ﻿BeforeAll {
     # Modify the path to your own
-    Import-Module D:\code\azure-powershell\src\Storage\RegressionTests\utils.ps1
+    Import-Module .\utils.ps1
     
-    [xml]$config = Get-Content D:\code\azure-powershell\src\Storage\RegressionTests\config.xml
+    [xml]$config = Get-Content .\config.xml
     $globalNode = $config.SelectSingleNode("config/section[@id='global']")
     $testNode = $config.SelectSingleNode("config/section[@id='dataplanePreview']")
-
-    cd C:\temp # This directory should exist before tests 
 
     $resourceGroupName = $globalNode.resourceGroupName
     $storageAccountName = $testNode.accountName
 
     $key = (Get-AzStorageAccountKey -ResourceGroupName $resourceGroupName -Name $storageAccountName)[0].Value
-    $ctx = New-AzStorageContext -StorageAccountName weirp1 -StorageAccountKey $key
-    $localSrcFile = "C:\temp\testfile_10240K_0" #The file need exist before test, and should be 512 bytes aligned
-    $localDestFile = "C:\temp\testpreview.txt" # test will create the file
+    $ctx = New-AzStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $key
+    $localSrcFile = ".\data\testfile_1K_0" #The file need exist before test, and should be 512 bytes aligned
+    $localDestFile = ".\created\testpreview.txt" # test will create the file
     $containerName = GetRandomContainerName
     # $containerName = "weitestpreview"
 
