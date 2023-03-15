@@ -44,13 +44,13 @@ BeforeAll {
     Add-AzAccount -ServicePrincipal -Tenant $globalNode.tenantId -SubscriptionId $globalNode.subscriptionId -Credential $cred 
 
     $resourceGroupName = $globalNode.resourceGroupName
-    $storageAccountKey = $testNode.accountKey
+    $storageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $resourceGroupName -Name $testNode.accountName)[0].Value
 
     $ctx = New-AzStorageContext  $testNode.accountName -StorageAccountKey $storageAccountKey
     $ctx2 = New-AzStorageContext  $testNode.accountName
 
     $filesystemName = "adlstest2"
-    $localSrcFile = ".\data\testfile_1024K_0" #The file needs to exist before tests, and should be 512 bytes aligned
+    $localSrcFile = ".\data\testfile_1K_0" #The file needs to exist before tests, and should be 512 bytes aligned
     $id = $globalNode.applicationId
 
     # for lease blob to make set acl recusive fail
