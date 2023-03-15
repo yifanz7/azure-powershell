@@ -73,7 +73,7 @@ Describe "dataplane test for preview" {
         $copyblob.AccessTier | Should -Be "Hot"
         $copyBlob.BlobProperties.ContentType | Should -Be "image/jpeg"
 
-        $copyblob = $blob | Copy-AzStorageBlob -DestContainer $containerName -DestBlob $destBlobName -StandardBlobTier Cold -Force
+        $copyblob = Copy-AzStorageBlob -SrcBlob $blob.Name -SrcContainer $containerName -DestContainer $containerName -DestBlob $destBlobName -StandardBlobTier Cold -Context $ctx1 -Force
         $copyblob.Name | Should -Be $destBlobName
         $copyblob.AccessTier | Should -Be "Cold"
         $copyBlob.BlobProperties.ContentType | Should -Be "image/jpeg"
