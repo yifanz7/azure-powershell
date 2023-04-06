@@ -37,7 +37,7 @@ Describe "Management plan test" {
 
         $accountNameBasic = $accountName + "basic"
 
-        $account = New-AzStorageAccount -ResourceGroupName $rgname -StorageAccountName $accountNameBasic -SkuName Standard_GRS -Location "westus" -Kind StorageV2  -EnableHierarchicalNamespace $true -EnableHttpsTrafficOnly $true -AllowCrossTenantReplication $false -PublicNetworkAccess Disabled  -AllowedCopyScope AAD
+        $account = New-AzStorageAccount -ResourceGroupName $rgname -StorageAccountName $accountNameBasic -SkuName Standard_GRS -Location "westus" -Kind StorageV2  -EnableHierarchicalNamespace $true -EnableHttpsTrafficOnly $true -AllowCrossTenantReplication $false -PublicNetworkAccess Disabled  -AllowedCopyScope AAD -DnsEndpointType AzureDnsZone
         $account.ResourceGroupName | should -Be $rgname
         $account.StorageAccountName | should -Be $accountNameBasic
         $account.Sku.Name | should -Be "Standard_GRS"
@@ -48,6 +48,7 @@ Describe "Management plan test" {
         $account.AllowCrossTenantReplication | should -Be $false
         $account.PublicNetworkAccess | should -Be Disabled
         $account.AllowedCopyScope | should -Be AAD
+        $account.DnsEndpointType | Should -Be "AzureDnsZone"
         
         $result = Get-AzStorageAccountNameAvailability -Name $accountNameBasic 
         $result.NameAvailable | should -Be $false
