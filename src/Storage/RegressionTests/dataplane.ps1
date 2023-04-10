@@ -1820,9 +1820,48 @@ Describe "dataplane test" {
         $Error.Count | should -be 0
     }
 
-    It "Test case name"  {
+    It "File cmdlets context issue fix"  {
         $Error.Clear()        
 
+        $accountname = GetRandomAccountName + "fc1"
+        $currentctx = (New-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $accountname -SkuName Standard_LRS -Location eastus).Context
+        Set-AzCurrentStorageAccount -Context $currentctx
+
+        $ctx2 = (Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName2).Context
+        $sharename = GetRandomContainerName
+
+        $s = New-AzStorageShare -Name $sharename -Context $ctx2 
+        $d = New-AzStorageDirectory -Share $s.CloudFileShare -Path dir1 
+        $d.Context.FileEndPoint | Should -BeLike *$storageAccountName2*
+
+        $f = Set-AzStorageFileContent -Directory $d.CloudFileDirectory -Source .\data\testfile_1K_0 -Path test1 -PassThru -Force
+        $f.Context.FileEndPoint | Should -BeLike *$storageAccountName2*
+
+        $s = Set-AzStorageShareQuota -Share $s.CloudFileShare -Quota 100 
+        $s.Context.FileEndPoint | should -BeLike *$storageAccountName2*
+
+        $f = Get-AzStorageFileContent -File $f.CloudFile -Destination .\created\test1 -PassThru -Force
+        $f.Context.FileEndPoint | Should -BeLike *$storageAccountName2*
+
+        $f = Get-AzStorageFile -Directory $d.CloudFileDirectory -Path test1 
+        $f.Context.FileEndPoint | Should -BeLike *$storageAccountName2*
+
+        $f = Remove-AzStorageFile -File $f.CloudFile -PassThru 
+        $f.Context.FileEndPoint | Should -BeLike *$storageAccountName2*
+
+        $d = Remove-AzStorageDirectory -Directory $d.CloudFileDirectory -PassThru
+        $d.Context.FileEndPoint | Should -BeLike *$storageAccountName2*
+
+        $s = Remove-AzStorageShare -Share $s.CloudFileShare -PassThru -Force
+        $s.Context.FileEndPoint | should -BeLike *$storageAccountName2*
+
+        Remove-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $accountname -Force -AsJob
+
+        $Error.Count | should -be 0
+    }
+
+    It "Test case name"  {
+        $Error.Clear()     
 
         $Error.Count | should -be 0
     }
