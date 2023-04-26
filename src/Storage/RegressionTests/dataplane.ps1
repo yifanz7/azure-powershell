@@ -1878,7 +1878,7 @@ Describe "dataplane test" {
 
         $blobs = Get-AzStorageBlob -Container $containername1 -Context $currentctx 
         $blobs.Count | Should -Be 2 
-        $blobs.Name | Should -Contain $destblobname1
+        $blobs.Name | Should -Contain $destblobname
 
         $blobs = Get-AzStorageBlob -Container $containername1 -Prefix "/" -Context $currentctx 
         $blobs.Count | Should -Be 1 
