@@ -230,6 +230,38 @@ Describe "dataplane test" {
         $Error.Count | should -be 0
 
     }
+
+    It "Datalakegen2 sticky bit" {
+        $Error.Clear()
+
+        $destPath = "teststickybit" 
+        $file = New-AzDataLakeGen2Item -FileSystem $filesystemName -Path $destPath -Source $localSrcFile -Permission rwxrwxrwt -Umask ---rwx--- -Context $ctx 
+        $file.Path | Should -Be $destPath 
+        $file.Permissions.ToSymbolicPermissions() | Should -Be "rwx---rwt"
+
+        $file = New-AzDataLakeGen2Item -FileSystem $filesystemName -Path $destPath -Source $localSrcFile -Permission rwxrwxrwt -Umask ---rwx--x -Context $ctx -Force
+        $file.Permissions.ToSymbolicPermissions() | Should -Be "rwx---rwT"
+
+        $file = New-AzDataLakeGen2Item -FileSystem $filesystemName -Path $destPath -Source $localSrcFile -Permission rwxrwxrwT -Umask ---rwx--x -Context $ctx -Force
+        $file.Permissions.ToSymbolicPermissions() | Should -Be "rwx---rwT"
+
+        $file = New-AzDataLakeGen2Item -FileSystem $filesystemName -Path $destPath -Source $localSrcFile -Permission rwxrwxrwT -Umask ---rwx--- -Context $ctx -Force
+        $file.Permissions.ToSymbolicPermissions() | Should -Be "rwx---rwT"
+
+        $dir = New-AzDataLakeGen2Item -FileSystem $filesystemName -Path dir1 -Directory -Permission rwxrwxrwt -Umask ---rwx--x -Context $ctx 
+        $dir.Permissions.ToSymbolicPermissions() | Should -Be "rwx---rwT"
+
+        $file = Update-AzDataLakeGen2Item -FileSystem $filesystemName -Path $destPath -Permission rwxrwxrwt -Context $ctx
+        $file.Permissions.ToSymbolicPermissions() | Should -Be "rwxrwxrwt"
+
+        $Error.Count | should -be 0
+    }
+
+    It "TODO" {
+        $Error.Clear()
+
+        $Error.Count | should -be 0
+    }
     
     
     AfterAll { 

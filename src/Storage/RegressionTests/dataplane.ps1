@@ -1860,6 +1860,79 @@ Describe "dataplane test" {
         $Error.Count | should -be 0
     }
 
+    It "List blob with leading slashes"  {
+        $Error.Clear()     
+
+        $accountname = GetRandomAccountName + "slash"
+        $currentctx = (New-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $accountname -SkuName Standard_LRS -Location eastus).Context
+
+        $containername1 = GetRandomContainerName
+        New-AzStorageContainer -Name $containername1 -Context $currentctx 
+
+        $destblobname = "///test1"
+        $destblobname2 = "test2"
+        $blob = Set-AzStorageBlobContent -File $localSmallSrcFile -Container $containername1 -Blob $destblobname -Context $currentctx -Force
+        $blob.Name | Should -Be $destblobname
+        $blob = Set-AzStorageBlobContent -File $localSmallSrcFile -Container $containername1 -Blob $destblobname2 -Context $currentctx -Force
+        $blob.Name | Should -Be $destblobname2
+
+        $blobs = Get-AzStorageBlob -Container $containername1 -Context $currentctx 
+        $blobs.Count | Should -Be 2 
+        $blobs.Name | Should -Contain $destblobname
+
+        $blobs = Get-AzStorageBlob -Container $containername1 -Prefix "/" -Context $currentctx 
+        $blobs.Count | Should -Be 1 
+        $blobs[0].Name | Should -Be $destblobname
+
+        $blobs[0] | Remove-AzStorageBlob
+        
+        Remove-AzStorageContainer -Name $containername1 -Context $currentctx -Force 
+
+        Remove-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $accountname -Force -AsJob
+
+        $Error.Count | should -be 0
+    }
+
+    It "Rename file and directory"  {
+        $Error.Clear()     
+
+        $accountname = GetRandomAccountName + "rename"
+        $currentctx = (New-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $accountname -SkuName Standard_LRS -Location eastus).Context
+
+        $sharename = "testrenameshare1"
+        $dirpath = "dir1"
+        $filename = "file1"
+        $share = New-AzStorageShare -Name $sharename -Context $currentctx 
+        $dir = New-AzStorageDirectory -ShareName $sharename -Path $dirpath -Context $currentctx 
+        $file = Set-AzStorageFileContent -ShareName $sharename -Source $localSmallSrcFile -Path $filename -Force -Context $currentctx -PassThru
+
+        $destdir = "dir2"
+        $destfilename = "file2"
+
+        $file2 = Rename-AzStorageFile -ShareName $sharename -SourcePath $filename -DestinationPath $destfilename -Context $currentctx -Force 
+        $file2.Name | Should -Be $destfilename
+        $file2.Length | Should -Be $file.Length
+
+        $dir2 = Rename-AzStorageDirectory -ShareName $sharename -SourcePath $dirpath -DestinationPath $destdir -Context $currentctx -Force
+        $dir2.Name | Should -Be $destdir
+        $dir2.Length | Should -Be $dir.Length
+
+        $file = $file2 | Rename-AzStorageFile -DestinationPath $filename 
+        $file.Name | Should -Be $filename
+        $file.Length | Should -Be $file2.Length
+
+        $file = $share | Rename-AzStorageFile -SourcePath $filename -DestinationPath $destfilename
+        $file.Name | Should -Be $destfilename
+
+        $dir = $dir2 | Rename-AzStorageDirectory -DestinationPath $dirpath 
+        $dir.Name | Should -Be $dirpath
+        $dir.Length | Should -Be $dir2.Length
+
+        Remove-AzStorageShare -Name $sharename -Context $currentctx -Force
+
+        $Error.Count | should -be 0
+    }
+
     It "Test case name"  {
         $Error.Clear()     
 
