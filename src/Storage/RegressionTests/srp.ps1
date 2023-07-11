@@ -342,9 +342,12 @@ Describe "Management plan test" {
 
         $accountNameLc1 = $accountName + "lc1"
         $accountNameLc2 = $accountName + "lc2"
+        $accountNamePremium = $accountName + "prem"
 
         New-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameLc1 -SkuName Standard_LRS -Location eastus
         New-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameLc2 -SkuName Standard_LRS -Location eastus
+        # create account for TierToHot
+        New-AzStorageAccount -ResourceGroupName $rgname -Name $accountNamePremium -SkuName Premium_LRS -Location eastus2 -Kind BlockBlobStorage
 
         # Resource id for storage account 2 
         $id = (Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameLc2).Id
@@ -391,10 +394,19 @@ Describe "Management plan test" {
         $rule2.Definition.Filters.PrefixMatch | should -be $null
         $rule2.Definition.Filters.BlobTypes.Count | should -be 2
 
+        # create Rule3 
+        $action3 = Add-AzStorageAccountManagementPolicyAction -BaseBlobAction TierToCold -DaysAfterCreationGreaterThan 50
+        $action3 = Add-AzStorageAccountManagementPolicyAction -InputObject $action3 -BaseBlobAction TierToCool -DaysAfterModificationGreaterThan 100
+        $action3 = Add-AzStorageAccountManagementPolicyAction -InputObject $action3 -SnapshotAction TierToCold -DaysAfterCreationGreaterThan 50 
+        $action3 = Add-AzStorageAccountManagementPolicyAction -InputObject $action3 -BlobVersionAction TierToCold -DaysAfterCreationGreaterThan 100
+        $filter3 = New-AzStorageAccountManagementPolicyFilter -PrefixMatch prefix1,prefix2
+        $rule3 = New-AzStorageAccountManagementPolicyRule -Name Test3 -Action $action3 -Filter $filter3
+
+
         # (Option 1) Set the 2 rules together
-        $policy = Set-AzStorageAccountManagementPolicy -ResourceGroupName $rgname -StorageAccountName $accountNameLc1 -Rule $rule1,$rule2 
-        $policy = Set-AzStorageAccountManagementPolicy -StorageAccountResourceId $id -Rule $rule1,$rule2 
-        $policy.Rules.Count | should -Be 2
+        $policy = Set-AzStorageAccountManagementPolicy -ResourceGroupName $rgname -StorageAccountName $accountNameLc1 -Rule $rule1,$rule2,$rule3
+        $policy = Set-AzStorageAccountManagementPolicy -StorageAccountResourceId $id -Rule $rule1,$rule2,$rule3 
+        $policy.Rules.Count | should -Be 3
         $policy.Rules[0].Enabled | should -Be $true
         $policy.Rules[0].Name | should -be Test
         $policy.Rules[0].Definition.Actions.BaseBlob.TierToCool.daysAfterCreationGreaterThan | should -be 30
@@ -420,6 +432,14 @@ Describe "Management plan test" {
         $policy.Rules[1].Definition.Actions.Version | should -be $null
         $policy.Rules[1].Definition.Filters.PrefixMatch | should -be $null
         $policy.Rules[1].Definition.Filters.BlobTypes.Count | should -be 2
+        $policy.Rules[2].Name | Should -Be Test3
+        $policy.Rules[2].Enabled | Should -Be $true
+        $policy.Rules[2].Definition.Filters.BlobTypes.Count | Should -Be 1
+        $policy.Rules[2].Definition.Actions.BaseBlob.TierToCold.DaysAfterCreationGreaterThan | Should -Be 50 
+        $policy.Rules[2].Definition.Actions.BaseBlob.TierToCool.DaysAfterModificationGreaterThan | Should -Be 100
+        $policy.Rules[2].Definition.Actions.Snapshot.TierToCold.DaysAfterCreationGreaterThan | Should -Be 50
+        $policy.Rules[2].Definition.Actions.Version.TierToCold.DaysAfterCreationGreaterThan | Should -Be 100
+        $policy.Rules[2].Definition.Filters.PrefixMatch.Count | Should -Be 2
 
         # (Option 2) Set Policy with 1 command
         $policy = Set-AzStorageAccountManagementPolicy -ResourceGroupName $rgname -StorageAccountName $accountNameLc1 -Policy (@{
@@ -463,9 +483,31 @@ Describe "Management plan test" {
                         BlobTypes=@("blockBlob","appendblob");
                     })
                 })
+            },
+            @{
+                Enabled=$true;
+                Name="Test3";
+                Definition=(@{
+                    Actions=(@{
+                        BaseBlob=(@{
+                            TierToCold=@{DaysAfterCreationGreaterThan=50};
+                            TierToCool=@{DaysAfterModificationGreaterThan=100};
+                        });
+                        Snapshot=(@{
+                            TierToCold=@{DaysAfterCreationGreaterThan=50}
+                        });
+                        Version=(@{
+                            TierToCold=@{DaysAfterCreationGreaterThan=100};
+                        });
+                    });
+                    Filters=(@{
+                        BlobTypes=@("blockBlob");
+                        PrefixMatch=@("prefix1","prefix2");
+                    })
+                })
             })
         })
-        $policy.Rules.Count | should -Be 2
+        $policy.Rules.Count | should -Be 3
         $policy.Rules[0].Enabled | should -Be $true
         $policy.Rules[0].Name | should -be Test
         $policy.Rules[0].Definition.Actions.BaseBlob.TierToCool.DaysAfterCreationGreaterThan | should -be 30
@@ -491,19 +533,66 @@ Describe "Management plan test" {
         $policy.Rules[1].Definition.Actions.Version | should -be $null
         $policy.Rules[1].Definition.Filters.PrefixMatch | should -be $null
         $policy.Rules[1].Definition.Filters.BlobTypes.Count | should -be 2
+        $policy.Rules[2].Name | Should -Be Test3
+        $policy.Rules[2].Enabled | Should -Be $true
+        $policy.Rules[2].Definition.Filters.BlobTypes.Count | Should -Be 1
+        $policy.Rules[2].Definition.Actions.BaseBlob.TierToCold.DaysAfterCreationGreaterThan | Should -Be 50 
+        $policy.Rules[2].Definition.Actions.BaseBlob.TierToCool.DaysAfterModificationGreaterThan | Should -Be 100
+        $policy.Rules[2].Definition.Actions.Snapshot.TierToCold.DaysAfterCreationGreaterThan | Should -Be 50
+        $policy.Rules[2].Definition.Actions.Version.TierToCold.DaysAfterCreationGreaterThan | Should -Be 100
+        $policy.Rules[2].Definition.Filters.PrefixMatch.Count | Should -Be 2
+
 
         $policy2 = Get-AzStorageAccountManagementPolicy -StorageAccountResourceId $id | Set-AzStorageAccountManagementPolicy -ResourceGroupName $rgname -StorageAccountName $accountNameLc2
-        $policy2.Rules.Count | should -Be 2
+        $policy2.Rules.Count | should -Be 3
 
         $policy2 = Get-AzStorageAccountManagementPolicy -ResourceGroupName $rgname -StorageAccountName $accountNameLc2
-        $policy2.Rules.Count | should -Be 2
+        $policy2.Rules.Count | should -Be 3
+
+
+        # TierToHot
+        $action4 = Add-AzStorageAccountManagementPolicyAction -BaseBlobAction TierToHot -DaysAfterCreationGreaterThan 50 
+        $action4 = Add-AzStorageAccountManagementPolicyAction -InputObject $action4 -BaseBlobAction TierToCool -DaysAfterCreationGreaterThan 100
+        $filter4 = New-AzStorageAccountManagementPolicyFilter -PrefixMatch prefix1,prefix2 
+        $rule4 = New-AzStorageAccountManagementPolicyRule -Name Test4 -Action $action4 -Filter $filter4
+
+        $policy = Set-AzStorageAccountManagementPolicy -ResourceGroupName $rgname -StorageAccountName $accountNamePremium -Rule $rule4
+        $policy.Rules.Count | Should -Be 1 
+        $policy.Rules[0].Enabled | Should -Be $true 
+        $policy.Rules[0].Name | Should -Be "Test4"
+        $policy.Rules[0].Definition.Actions.BaseBlob.TierToHot.DaysAfterCreationGreaterThan | Should -Be 50 
+        $policy.Rules[0].Definition.Actions.BaseBlob.TierToCool.DaysAfterCreationGreaterThan | Should -Be 100 
+        $policy.Rules[0].Definition.Filters.PrefixMatch.Count | Should -Be 2 
+
+        $policy = Set-AzStorageAccountManagementPolicy -ResourceGroupName $rgname -StorageAccountName $accountNamePremium -Policy (@{
+            Rules=(@{
+                Enabled=$false;
+                Name="Test5";
+                Definition=(@{
+                    Actions=(@{
+                        BaseBlob=(@{
+                            TierToHot=@{DaysAfterCreationGreaterThan=100};
+                        });
+                    });
+                    Filters=(@{
+                        BlobTypes=@("blockBlob","appendblob");
+                    })
+                })
+            })
+        })
+        $policy.Rules.Count | Should -Be 1 
+        $policy.Rules.Name | Should -Be "Test5"
+        $policy.Rules[0].Enabled | Should -Be $false
+        $policy.Rules[0].Definition.Actions.BaseBlob.TierToHot.DaysAfterCreationGreaterThan | Should -Be 100
+        $policy.Rules[0].Definition.Filters.BlobTypes.Count | Should -Be 2
 
         Remove-AzStorageAccountManagementPolicy -ResourceGroupName $rgname -StorageAccountName $accountNameLc1 -PassThru
 
         get-Azstorageaccount -ResourceGroupName $rgname -Name $accountNameLc1 | Remove-AzStorageAccountManagementPolicy   
         
         Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameLc1| Remove-AzStorageAccount -Force
-        Remove-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameLc2 -Force   
+        Remove-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameLc2 -Force -AsJob
+        Remove-AzStorageAccount -ResourceGroupName $rgname -Name $accountNamePremium -Force -AsJob
 
         $Error.Count | should -be 0
     }

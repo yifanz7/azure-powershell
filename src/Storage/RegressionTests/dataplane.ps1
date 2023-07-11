@@ -8,9 +8,6 @@ BeforeAll {
     $globalNode = $config.SelectSingleNode("config/section[@id='global']")
     $testNode = $config.SelectSingleNode("config/section[@id='dataplane']")
 
-    # $rootFolder = "C:\temp" # The folder should be created before tests 
-    # cd $rootFolder
-
     $resourceGroupName = $globalNode.resourceGroupName
     $storageAccountName = $testNode.SelectSingleNode("accountName[@id='1']").'#text'
     $storageAccountName2 = $testNode.SelectSingleNode("accountName[@id='2']").'#text'
@@ -1144,7 +1141,7 @@ Describe "dataplane test" {
         $Error.Count | should -be 0
     }
 
-    It "Cross type blob copy"  {
+    It "Cross type blob copy"  -Tag "crossblobcopy" {
         $Error.Clear()     
         
         $blobTypes = @("Block", "Page", "Append")
@@ -1929,6 +1926,99 @@ Describe "dataplane test" {
         $dir.Length | Should -Be $dir2.Length
 
         Remove-AzStorageShare -Name $sharename -Context $currentctx -Force
+
+        $Error.Count | should -be 0
+    }
+
+    It "Cold tier"  {
+        $Error.Clear()     
+
+        $containername1 = GetRandomContainerName + "cold"
+        New-AzStorageContainer -Name $containername1 -Context $ctx
+
+        $blob = Set-AzStorageBlobContent -Container $containername1 -File $localSmallSrcFile -Blob test1 -StandardBlobTier Cold -Properties @{"ContentType" = "image/jpeg"} -Metadata @{"tag1" = "value1"} -Context $ctx 
+        $blob.Name | Should -Be "test1"
+        $blob.AccessTier | Should -Be "Cold"
+        $blob.BlobProperties.ContentType | Should -Be "image/jpeg"
+
+        $blob = Set-AzStorageBlobContent -Container $containerName1 -File $localBigSrcFile -Blob test2 -StandardBlobTier Cold -Context $ctx
+        $blob.Name | Should -Be "test2"
+        $blob.AccessTier | Should -Be "Cold"
+
+        $blob.BlobBaseClient.SetAccessTier("Cold")
+        $blob.AccessTier | Should -Be "Cold"
+        $blob.Name | Should -Be "test2"
+
+        $blob = Get-AzStorageBlob -Container $containerName1 -Blob test1 -Context $ctx
+        $blob.AccessTier | Should -Be "Cold"
+        $blob.Name | Should -Be "test1"
+        $blob.BlobProperties.ContentType | Should -Be "image/jpeg"
+
+        $destBlobName = "destblob1"
+        $copyblob = $blob | Copy-AzStorageBlob -DestContainer $containerName1 -DestBlob $destBlobName -Force
+        $copyblob.Name | Should -Be $destBlobName
+        $copyblob.AccessTier | Should -Be "Hot"
+        $copyBlob.BlobProperties.ContentType | Should -Be "image/jpeg"
+
+        $copyblob = Copy-AzStorageBlob -SrcBlob $blob.Name -SrcContainer $containerName1 -DestContainer $containerName -DestBlob $destBlobName -StandardBlobTier Cold -Context $ctx -Force
+        $copyblob.Name | Should -Be $destBlobName
+        $copyblob.AccessTier | Should -Be "Cold"
+        $copyBlob.BlobProperties.ContentType | Should -Be "image/jpeg"
+
+        $largeBlob = Get-AzStorageBlob -Blob test2 -Container $containerName1 -Context $ctx 
+        $copyblob = $largeblob | Copy-AzStorageBlob -DestContainer $containerName1 -DestBlob $destBlobName -StandardBlobTier Cold -Force
+        $copyblob.Name | Should -Be $destBlobName
+        $copyblob.AccessTier | Should -Be "Cold"
+
+        Start-AzStorageBlobCopy -DestContainer $containerName1 -DestBlob $destBlobName -StandardBlobTier Cold -SrcContainer $containerName1 -SrcBlob test1 -Force -Context $ctx -RehydratePriority Standard
+        $copyblob = Get-AzStorageBlob -Container $containerName1 -Blob $destBlobName -Context $ctx
+        $copyblob.Name | Should -Be $destBlobName
+        $copyblob.AccessTier | Should -Be "Cold"
+        $copyBlob.BlobProperties.ContentType | Should -Be "image/jpeg"
+
+        Remove-AzStorageContainer -Name $containername1 -Context $ctx -Force 
+
+        $Error.Count | should -be 0
+    }
+
+    It "Queue track2 migration"  {
+        $Error.Clear()     
+
+        New-AzStorageQueue -Name testq1 -Context $ctx 
+
+        $sas = New-AzStorageQueueSASToken -Name testq1 -Context $ctx -Permission ruap
+        $sas | Should -BeLike "*sp=raup*"
+        $sasctx = New-AzStorageContext -StorageAccountName $storageAccountName -SasToken $sas 
+        $q = Get-AzStorageQueue -Name testq1 -Context $sasctx
+        $q.Name | Should -Be "testq1"
+        $q.Context.StorageAccount.Credentials.IsSAS | Should -Be $true
+
+        $sas = New-AzStorageQueueSASToken -Name testq1 -Context $ctx -Permission rap -StartTime 2023-04-20 -ExpiryTime 2223-08-05
+        $sasctx = New-AzStorageContext -StorageAccountName $storageAccountName -SasToken $sas
+        $sas | Should -BeLike "*st=2023-04-19*se=2223-08-04*"
+        $q = Get-AzStorageQueue -Name testq1 -Context $sasctx
+        $q.Name | Should -Be "testq1"
+        $q.Context.StorageAccount.Credentials.IsSAS | Should -Be $true
+
+        $sas = New-AzStorageQueueSASToken -Name testq1 -Context $ctx -Permission raup -Protocol HttpsOnly -IPAddressOrRange 0.0.0.0-255.255.255.255 -ExpiryTime 2223-08-05
+        $sas | Should -BeLike "*spr=https*se=2223-08-04*sip=0.0.0.0-255.255.255.255*sp=raup*"
+        $sasctx = New-AzStorageContext -StorageAccountName $storageAccountName -SasToken $sas
+        $q = Get-AzStorageQueue -Name testq1 -Context $sasctx
+        $q.Name | Should -Be "testq1"
+        $q.Context.StorageAccount.Credentials.IsSAS | Should -Be $true
+
+        $sas = New-AzStorageQueueSASToken -Name testq1 -Context $ctx -Permission raup -ExpiryTime 2223-08-05 -FullUri
+        $sas | Should -BeLike "https://$($storageAccountName).queue.core.windows.net/testq1*se=2223-08-04*"
+
+        New-AzStorageQueueStoredAccessPolicy -Queue testq1 -Policy p001 -Permission ruap -StartTime 2023-5-1 -ExpiryTime 2223-08-05 -Context $ctx 
+        $sas = New-AzStorageQueueSASToken -Name testq1 -Policy p001 -Context $ctx -Protocol HttpsOnly -IPAddressOrRange 0.0.0.0-255.255.255.255
+        $sas | Should -BeLike "*spr=https*sip=0.0.0.0-255.255.255.255*si=p001*"
+        $sasctx = New-AzStorageContext -StorageAccountName $storageAccountName -SasToken $sas
+        $q = Get-AzStorageQueue -Name testq1 -Context $sasctx
+        $q.Name | Should -Be "testq1"
+        $q.Context.StorageAccount.Credentials.IsSAS | Should -Be $true
+
+        Remove-AzStorageQueue -Name testq1 -Context $ctx -Force 
 
         $Error.Count | should -be 0
     }
