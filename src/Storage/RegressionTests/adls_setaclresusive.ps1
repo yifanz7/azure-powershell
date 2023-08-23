@@ -295,7 +295,7 @@ Describe "Set DataLakeGen2 Acl Recursive" {
         $Error.Count | should -be 0
     }
 
-    It "REmove resume with ContinuationToken" {
+    It "Remove resume with ContinuationToken" {
         $Error.Clear()
 
         ResetFileToFail
