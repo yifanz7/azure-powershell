@@ -51,14 +51,15 @@ Describe "dataplane test" {
         #$dir11 = New-AzDataLakeGen2Item -Context $ctx -FileSystem $filesystemName -Path $dirname11 -Directory
 
         # Create File, and show properties/matadata in console (Note, Permission/Umask is not supported)
-        $sas = New-AzStorageContainerSASToken -Name $filesystemName -Permission rwdl -Context $ctx
+        $sas = New-AzStorageContainerSASToken -Name $filesystemName -Permission rwdl -Context $ctx 
         $sasctx = New-AzStorageContext -StorageAccountName $ctx.StorageAccountName -SasToken $sas
-        $file1 = New-AzDataLakeGen2Item -Context $sasctx -FileSystem $filesystemName -Path $filepath11 -Source $localSrcFile -Permission rwxrwxrwx -Umask ---rwx--- -Property @{"ContentEncoding" = "UDF8"; "CacheControl" = "READ"} -Metadata  @{"tag1" = "value1"; "tag2" = "value2" } 
+        $file1 = New-AzDataLakeGen2Item -Context $sasctx -FileSystem $filesystemName -Path $filepath11 -Source $localSrcFile -Permission rwxrwxrwx -Umask ---rwx--- -Property @{"ContentEncoding" = "UDF8"; "CacheControl" = "READ"} -Metadata  @{"tag1" = "value1"; "tag2" = "value2" } -EncryptionContext encryptioncontext 
         $file1.IsDirectory | should -Be $false
         $file1.Permissions.ToSymbolicPermissions() | should -be "rwx---rwx"
         $file1.Properties.Metadata.Count  | should -Be 2
         $file1.Properties.ContentEncoding | should -Be "UDF8"
         $file1.Properties.ContentLength | should -Be (Get-Item $localSrcFile).Length
+        $file1.Properties.EncryptionContext | Should -Be "encryptioncontext"
         ## create a file with task
         $task = New-AzDataLakeGen2Item -Context $ctx -FileSystem $filesystemName -Path $filepath12 -Source $localSrcFile -Force -asjob
         $task | Wait-Job
@@ -70,6 +71,7 @@ Describe "dataplane test" {
         $file2 = New-AzDataLakeGen2Item -Context $ctx -FileSystem $filesystemName -Path $destPath -Source $localSrcFile -Force
         $file2.IsDirectory | should -Be $false 
         $file2.Path | should -Be $destPath 
+        $file2.Properties.EncryptionContext | Should -Be $null
 
         # download content of a file (add -Force to avoid prompt)
         Get-AzDataLakeGen2ItemContent -Context $ctx -FileSystem $filesystemName -Path $filepath11 -Destination $localDestFile -Force
