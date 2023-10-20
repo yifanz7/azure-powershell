@@ -12,6 +12,7 @@ $useridentityname2 = ""
 $useridentity = Get-AzUserAssignedIdentity -ResourceGroupName $rgname -Name $useridentityname1
 $useridentity2 = Get-AzUserAssignedIdentity -ResourceGroupName $rgname -Name $useridentityname2
 
+################################### CMK ######################################################
 # CMK + SAI 
 # 1. Create a key vault with a key in it. Key type should be RSA. Assign key vault the access to the current user 
 # 2. PUT a volume group with PMK and a system assigned identity with it
@@ -56,3 +57,29 @@ Update-AzElasticSanVolumeGroup -ResourceGroupName $rgname -ElasticSanName $esnam
 # 2. Update to SystemAssigned
 Update-AzElasticSanVolumeGroup -ResourceGroupName $rgname -ElasticSanName $esname -Name $vgname -IdentityType SystemAssigned
 # 3. Follow steps in CMK + SAI
+
+
+############################### Snapshot ###################################################
+
+$vgname = ""
+$volname = ""
+$volname2 = ""
+$snapshotname1 = ""
+$snapshotname2 = ""
+
+# Create snapshots 
+$vg = New-AzElasticSanVolumeGroup -ResourceGroupName $rgname -ElasticSanName $esname -Name $vgname
+$vol = New-AzElasticSanVolume -ResourceGroupName $rgname -ElasticSanName $esname -VolumeGroupName $vgname -Name $volname -SizeGiB 1 
+$snapshot = New-AzElasticSanVolumeSnapshot -ResourceGroupName $rgname -ElasticSanName $esname -VolumeGroupName $vgname -Name $snapshotname1 -CreationDataSourceId $vol.Id
+$snapshot = New-AzElasticSanVolumeSnapshot -ResourceGroupName $rgname -ElasticSanName $esname -VolumeGroupName $vgname -Name $snapshotname2 -CreationDataSourceId $vol.Id
+
+# list snapshots 
+$snapshots = Get-AzElasticSanVolumeSnapshot -ResourceGroupName $rgname -ElasticSanName $esname -VolumeGroupName $vgname
+# Get a snapshot 
+$snapshot = Get-AzElasticSanVolumeSnapshot -ResourceGroupName $rgname -ElasticSanName $esname -VolumeGroupName $vgname -Name $snapshotname1
+# list snapshots of a volume 
+$snapshots = Get-AzElasticSanVolumeSnapshot -ResourceGroupName $rgname -ElasticSanName $esname -VolumeGroupName $vgname -Filter "volumeName eq $volname"
+# create a volume with a snapshot id 
+New-AzElasticSanVolume -ElasticSanName $esname -ResourceGroupName $rgname -VolumeGroupName $vgname -Name $volname2 -CreationDataSourceId $snapshot.Id -SizeGiB 1
+# remove a snapshot
+Remove-AzElasticSanVolumeSnapshot -ResourceGroupName $rgname -ElasticSanName $esname -VolumeGroupName $vgname -Name $snapshotname1
