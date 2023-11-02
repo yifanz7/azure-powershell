@@ -2054,6 +2054,8 @@ Describe "dataplane test" {
         $p = Get-AzStorageQueueStoredAccessPolicy -Queue $queuename -Policy p001 -Context $ctx
         $p.Policy | Should -Be "p001"
 
+        Remove-AzStorageQueueStoredAccessPolicy -Queue $queuename -Policy p001 -Context $ctx
+
         Remove-AzStorageQueue -Name $queuename -Context $ctx -Force 
         $q2 = Get-AzStorageQueue -Name testq2 -Context $ctxoauth1
         $q2 | Remove-AzStorageQueue -Force
