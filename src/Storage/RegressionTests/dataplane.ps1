@@ -1995,6 +1995,20 @@ Describe "dataplane test" {
         $q = New-AzStorageQueue -Name testq2 -Context $ctx 
         $qs = Get-AzStorageQueue -Context $ctx
         $qs.Count | Should -BeGreaterOrEqual 2
+        
+        $q = Get-AzStorageQueue -Name $queuename -Context $ctx
+        $queueMessage = New-Object -TypeName "Microsoft.Azure.Storage.Queue.CloudQueueMessage,$($q.CloudQueue.GetType().Assembly.FullName)" -ArgumentList "This is message 1"
+        $q.CloudQueue.AddMessageAsync($QueueMessage)
+        $q = Get-AzStorageQueue -Name $queuename -Context $ctxoauth1
+        $q.Name | Should -Be $queuename
+        $q.ApproximateMessageCount | Should -Be 1 
+        $q.QueueProperties.ApproximateMessagesCount | Should -Be 1 
+        $q.CloudQueue.ApproximateMessageCount | Should -Be 1 
+
+        $sas = New-AzStorageAccountSASToken -Service Queue -ResourceType Container,Object,Service -Permission rwdl -ExpiryTime 3000-01-01 -Context $ctx 
+        $ctxaccountsas = New-AzStorageContext -StorageAccountName $storageAccountName -SasToken $sas
+        $qs = Get-AzStorageQueue -Context $ctxaccountsas
+        $qs.Count | Should -BeGreaterOrEqual 2 
 
         $sas = New-AzStorageQueueSASToken -Name $queuename -Context $ctx -Permission ruap
         $sas | Should -BeLike "*sp=raup*"
@@ -2035,14 +2049,14 @@ Describe "dataplane test" {
         $p.Permissions | Should -Be "rau"
 
         $p = New-AzStorageQueueStoredAccessPolicy -Queue $queuename -Policy p002 -Permission ruap -Context $ctx
-
         $p = Get-AzStorageQueueStoredAccessPolicy -Queue $queuename -Context $ctx 
         $p.Count | Should -Be 2
         $p = Get-AzStorageQueueStoredAccessPolicy -Queue $queuename -Policy p001 -Context $ctx
         $p.Policy | Should -Be "p001"
 
         Remove-AzStorageQueue -Name $queuename -Context $ctx -Force 
-        Remove-AzStorageQueue -Name testq2 -Context $ctx -Force
+        $q2 = Get-AzStorageQueue -Name testq2 -Context $ctxoauth1
+        $q2 | Remove-AzStorageQueue -Force
 
         $Error.Count | should -be 0
     }
