@@ -33,20 +33,10 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Queue
         public string Name { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the GetAzureStorageQueueCommand class.
-        /// </summary>
-        public NewAzureStorageQueueCommand()
-            : this(null)
-        {
-        }
-
-        /// <summary>
         /// Initializes a new instance of the NewAzureStorageQueueCommand class.
         /// </summary>
-        /// <param name="channel">IStorageQueueManagement channel</param>
-        public NewAzureStorageQueueCommand(IStorageQueueManagement channel)
+        public NewAzureStorageQueueCommand()
         {
-            Channel = channel;
             EnableMultiThread = false;
         }
 

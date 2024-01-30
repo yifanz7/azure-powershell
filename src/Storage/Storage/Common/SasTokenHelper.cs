@@ -354,7 +354,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
             DateTime? startTime = null,
             DateTime? expiryTime = null,
             string iPAddressOrRange = null,
-            SharedAccessProtocol? protocol = null)
+            SasProtocol? protocol = null)
         {
             QueueSasBuilder sasBuilder = new QueueSasBuilder
             {
@@ -441,14 +441,15 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
             }
             if (protocol != null)
             {
-                if (protocol.Value == SharedAccessProtocol.HttpsOrHttp)
-                {
-                    sasBuilder.Protocol = SasProtocol.HttpsAndHttp;
-                }
-                else //HttpsOnly
-                {
-                    sasBuilder.Protocol = SasProtocol.Https;
-                }
+                sasBuilder.Protocol = (SasProtocol)protocol;
+                //if (protocol.Value == SharedAccessProtocol.HttpsOrHttp)
+                //{
+                //    sasBuilder.Protocol = SasProtocol.HttpsAndHttp;
+                //}
+                //else //HttpsOnly
+                //{
+                //    sasBuilder.Protocol = SasProtocol.Https;
+                //}
             }
             return sasBuilder;
         }

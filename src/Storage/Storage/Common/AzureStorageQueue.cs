@@ -92,7 +92,7 @@ namespace Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel
         /// <param name="queue">Cloud queue object</param>
         public AzureStorageQueue(CloudQueue queue)
         {
-            CloudQueue = queue;
+            //CloudQueue = queue;
             Name = queue.Name;
             Uri = queue.Uri;
             ApproximateMessageCount = queue.ApproximateMessageCount;
@@ -103,9 +103,9 @@ namespace Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel
         {
             Name = queueClient.Name;
             this.privateQueueClient = queueClient;
-            CloudQueue = GetTrack1QueueClient(queueClient, storageContext.StorageAccount.Credentials);
-            CloudQueue.FetchAttributes();
-            EncodeMessage = CloudQueue.EncodeMessage;
+            //CloudQueue = GetTrack1QueueClient(queueClient, storageContext.StorageAccount.Credentials);
+            //CloudQueue.FetchAttributes();
+            //EncodeMessage = CloudQueue.EncodeMessage;
             Uri = queueClient.Uri;
             if (queueProperties != null)
             {

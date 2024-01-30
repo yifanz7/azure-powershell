@@ -48,20 +48,10 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Queue.Cmdlet
         /// Initializes a new instance of the GetAzureStorageQueueStoredAccessPolicyCommand class.
         /// </summary>
         public GetAzureStorageQueueStoredAccessPolicyCommand()
-            : this(null)
         {
         }
 
-        /// <summary>
-        /// Initializes a new instance of the GetAzureStorageQueueStoredAccessPolicyCommand class.
-        /// </summary>
-        /// <param name="channel">IStorageBlobManagement channel</param>
-        public GetAzureStorageQueueStoredAccessPolicyCommand(IStorageQueueManagement channel)
-        {
-            Channel = channel;
-        }
-
-        internal async Task GetAzureQueueStoredAccessPolicyAsync(IStorageQueueManagement localChannel, long taskId, string queueName, string policyName)
+        internal async Task GetAzureQueueStoredAccessPolicyAsync(long taskId, string queueName, string policyName)
         {
 
             QueueClient queueClient = Util.GetTrack2QueueClient(queueName, (AzureStorageContext)this.Context, this.ClientOptions);
@@ -95,13 +85,6 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Queue.Cmdlet
             }
         }
 
-        internal async Task<SharedAccessQueuePolicies> GetPoliciesAsync(IStorageQueueManagement localChannel, string queueName, string policyName)
-        {
-            CloudQueue queue = localChannel.GetQueueReference(queueName);
-            QueuePermissions queuePermissions = await localChannel.GetPermissionsAsync(queue, null, OperationContext).ConfigureAwait(false);
-            return queuePermissions.SharedAccessPolicies;
-        }
-
         /// <summary>
         /// Execute command
         /// </summary>
@@ -109,7 +92,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Queue.Cmdlet
         public override void ExecuteCmdlet()
         {
             if (String.IsNullOrEmpty(Queue)) return;
-            Task taskGenerator(long taskId) => GetAzureQueueStoredAccessPolicyAsync(Channel, taskId, Queue, Policy);
+            Task taskGenerator(long taskId) => GetAzureQueueStoredAccessPolicyAsync(taskId, Queue, Policy);
             RunTask(taskGenerator);
 
 

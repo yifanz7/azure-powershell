@@ -12,47 +12,47 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel;
-using Microsoft.WindowsAzure.Commands.Storage.Common;
-using Microsoft.WindowsAzure.Commands.Storage.Queue;
-using Microsoft.Azure.Storage.Queue;
+//using System;
+//using System.Collections.Generic;
+//using System.Linq;
+//using Microsoft.VisualStudio.TestTools.UnitTesting;
+//using Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel;
+//using Microsoft.WindowsAzure.Commands.Storage.Common;
+//using Microsoft.WindowsAzure.Commands.Storage.Queue;
+//using Microsoft.Azure.Storage.Queue;
 
-namespace Microsoft.WindowsAzure.Commands.Storage.Test.Queue
-{
-    [TestClass]
-    public class GetAzureStorageQueueTest : StorageQueueTestBase
-    {
-        public GetAzureStorageQueueCommand command = null;
+//namespace Microsoft.WindowsAzure.Commands.Storage.Test.Queue
+//{
+//    [TestClass]
+//    public class GetAzureStorageQueueTest : StorageQueueTestBase
+//    {
+//        public GetAzureStorageQueueCommand command = null;
 
-        [TestInitialize]
-        public void InitCommand()
-        {
-            command = new GetAzureStorageQueueCommand(queueMock)
-            {
-                CommandRuntime = MockCmdRunTime
-            };
-        }
+//        [TestInitialize]
+//        public void InitCommand()
+//        {
+//            command = new GetAzureStorageQueueCommand(queueMock)
+//            {
+//                CommandRuntime = MockCmdRunTime
+//            };
+//        }
 
-        [TestCleanup]
-        public void CleanCommand()
-        {
-            command = null;
-        }
+//        [TestCleanup]
+//        public void CleanCommand()
+//        {
+//            command = null;
+//        }
 
-        [TestMethod]
-        public void ExecuteCommandGetQueueTest()
-        {
-            AddTestQueues();
-            command.Name = "test";
-            command.ExecuteCmdlet();
-            Assert.AreEqual(1, MockCmdRunTime.OutputPipeline.Count);
+//        [TestMethod]
+//        public void ExecuteCommandGetQueueTest()
+//        {
+//            AddTestQueues();
+//            command.Name = "test";
+//            command.ExecuteCmdlet();
+//            Assert.AreEqual(1, MockCmdRunTime.OutputPipeline.Count);
 
-            AzureStorageQueue queue = (AzureStorageQueue)MockCmdRunTime.OutputPipeline.FirstOrDefault();
-            Assert.AreEqual(command.Name, queue.Name);
-        }
-    }
-}
+//            AzureStorageQueue queue = (AzureStorageQueue)MockCmdRunTime.OutputPipeline.FirstOrDefault();
+//            Assert.AreEqual(command.Name, queue.Name);
+//        }
+//    }
+//}

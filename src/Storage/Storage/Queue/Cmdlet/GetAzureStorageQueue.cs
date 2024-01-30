@@ -58,17 +58,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Queue
         /// Initializes a new instance of the GetAzureStorageQueueCommand class.
         /// </summary>
         public GetAzureStorageQueueCommand()
-            : this(null)
         {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the GetAzureStorageQueueCommand class.
-        /// </summary>
-        /// <param name="channel">IStorageQueueManagement channel</param>
-        public GetAzureStorageQueueCommand(IStorageQueueManagement channel)
-        {
-            Channel = channel;
             EnableMultiThread = false;
         }
 
