@@ -13,9 +13,11 @@ BeforeAll {
     $storageAccountName2 = $testNode.SelectSingleNode("accountName[@id='2']").'#text'
     
     # create oauth context
-    $secpasswd = ConvertTo-SecureString $globalNode.secPwd -AsPlainText -Force
-    $cred = New-Object System.Management.Automation.PSCredential ($globalNode.applicationId, $secpasswd)
-    Add-AzAccount -ServicePrincipal -Tenant $globalNode.tenantId -SubscriptionId $globalNode.subscriptionId -Credential $cred 
+    #$secpasswd = ConvertTo-SecureString $globalNode.secPwd -AsPlainText -Force
+    #$cred = New-Object System.Management.Automation.PSCredential ($globalNode.applicationId, $secpasswd)
+    #Add-AzAccount -ServicePrincipal -Tenant $globalNode.tenantId -SubscriptionId $globalNode.subscriptionId -Credential $cred 
+
+    COnnect-AzAccount
     $ctxoauth1 = New-AzStorageContext -StorageAccountName $storageAccountName
     $ctxoauth2 = New-AzStorageContext -StorageAccountName $storageAccountName2
 
@@ -272,6 +274,7 @@ Describe "dataplane test" {
     It "Set-AzStorageContainerAcl won't clean up the stored Access Policy" -Tag "accesspolicy" {
         $Error.Clear()
 
+        Set-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName -AllowBlobPublicAccess $true
         ## regression test for Fix  Set-AzStorageContainerAcl can clean up the stored Access Policy
         New-AzStorageContainerStoredAccessPolicy -Container $containerName  -Policy 123 -Permission rw -Context $ctx
         New-AzStorageContainerStoredAccessPolicy -Container $containerName  -Policy 234 -Permission rwdl -Context $ctx
@@ -289,6 +292,8 @@ Describe "dataplane test" {
         # test generate SAS with access policy and start / expire will success
         $sas = New-AzStorageContainerSASToken -Name $ContainerName -Policy 123  -StartTime (Get-Date) -ExpiryTime (Get-Date).AddDays(1) -Context $ctx
         $sas.Length | should -BeGreaterThan 10
+
+        Set-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName -AllowBlobPublicAccess $false
 
         $Error.Count | should -be 0
     }
@@ -536,10 +541,10 @@ Describe "dataplane test" {
         New-AzStorageQueue -Name $containerName -Context $ctx
         Get-AzStorageQueue -Context $ctx
         $queue = Get-AzStorageQueue -Name $containerName -Context $ctx
-        $queueMessage = New-Object -TypeName "Microsoft.Azure.Storage.Queue.CloudQueueMessage,$($queue.CloudQueue.GetType().Assembly.FullName)" -ArgumentList "This is message 1"
-        $queue.CloudQueue.AddMessageAsync($QueueMessage)
-        $queueMessage = New-Object -TypeName "Microsoft.Azure.Storage.Queue.CloudQueueMessage" -ArgumentList "This is message 2"
-        $queue.CloudQueue.AddMessageAsync($QueueMessage)
+        $queueMessage = "This is message 1"
+        $queue.QueueClient.SendMessage($QueueMessage)
+        $queueMessage = "This is message 2"
+        $queue.QueueClient.SendMessage($QueueMessage)
         Remove-AzStorageQueue -Name $containerName -Force -Context $ctx
         Get-AzStorageQueue -Context $ctx
         $Error.Count | should -be 0
@@ -728,15 +733,17 @@ Describe "dataplane test" {
         $Error.Clear()
 
          ## Encryption Scope
-        $secpasswd = ConvertTo-SecureString $globalNode.secPwd -AsPlainText -Force
-        $cred = New-Object System.Management.Automation.PSCredential ($globalNode.applicationId, $secpasswd)
-        Add-AzAccount -ServicePrincipal -Tenant $globalNode.tenantId -SubscriptionId $globalNode.subscriptionId -Credential $cred 
+        #$secpasswd = ConvertTo-SecureString $globalNode.secPwd -AsPlainText -Force
+        #$cred = New-Object System.Management.Automation.PSCredential ($globalNode.applicationId, $secpasswd)
+        #Add-AzAccount -ServicePrincipal -Tenant $globalNode.tenantId -SubscriptionId $globalNode.subscriptionId -Credential $cred 
 
         $scopeName1 = "testscope"
         $scopeName2 = "testscope2"    
         $md5 = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider
         New-AzStorageEncryptionScope -ResourceGroupName $resourceGroupName -StorageAccountName $storageAccountName -EncryptionScopeName $scopeName1 -StorageEncryption
         New-AzStorageEncryptionScope -ResourceGroupName $resourceGroupName -StorageAccountName $storageAccountName -EncryptionScopeName $scopeName2 -StorageEncryption
+        Set-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName -AllowBlobPublicAccess $true
+        sleep 10 
         try{
 
             $containerName_es = $containerName + "es"
@@ -768,6 +775,7 @@ Describe "dataplane test" {
            throw; 
         }
         
+        Set-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName -AllowBlobPublicAccess $false
 
         Remove-AzStorageContainer $containerName_es -Context $ctx -Force
         $Error.Count | should -be 0
@@ -1085,39 +1093,39 @@ Describe "dataplane test" {
         
         $rgname = $globalNode.resourceGroupName
         $accountName = $testNode.SelectSingleNode("accountName[@id='3']").'#text'
-        $ctx = (Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountName).Context
+        $ctxhns = (Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountName).Context
 
         $localSrcFile = ".\data\testfile_1K_0" 
         $filesystemName = "retestsoftdelete"
 
         # enable soft delete (on blob, also on hns)
-        Enable-AzStorageDeleteRetentionPolicy -RetentionDays 1  -Context $ctx 
+        Enable-AzStorageDeleteRetentionPolicy -RetentionDays 1  -Context $ctxhns 
 
         # create file system and items
-        New-AzDatalakeGen2FileSystem -Name $filesystemName -Context $ctx        
-        New-AzDataLakeGen2Item -Context $ctx -FileSystem $filesystemName -Directory -Path dir0 
-        New-AzDataLakeGen2Item -Context $ctx -FileSystem $filesystemName -Directory -Path dir0/dir0
-        New-AzDataLakeGen2Item -Context $ctx -FileSystem $filesystemName -Directory -Path dir0/dir1
-        New-AzDataLakeGen2Item -Context $ctx -FileSystem $filesystemName -Directory -Path dir0/dir2
-        New-AzDataLakeGen2Item -Context $ctx -FileSystem $filesystemName -Path dir0/dir1/file1 -Source $localSrcFile -Force
-        New-AzDataLakeGen2Item -Context $ctx -FileSystem $filesystemName -Path dir0/dir1/file2 -Source $localSrcFile -Force
-        New-AzDataLakeGen2Item -Context $ctx -FileSystem $filesystemName -Path dir0/dir2/file3 -Source $localSrcFile -Force
-        New-AzDataLakeGen2Item -Context $ctx -FileSystem $filesystemName -Path dir0/dir2/file4 -Source $localSrcFile -Force 
+        New-AzDatalakeGen2FileSystem -Name $filesystemName -Context $ctxhns        
+        New-AzDataLakeGen2Item -Context $ctxhns -FileSystem $filesystemName -Directory -Path dir0 
+        New-AzDataLakeGen2Item -Context $ctxhns -FileSystem $filesystemName -Directory -Path dir0/dir0
+        New-AzDataLakeGen2Item -Context $ctxhns -FileSystem $filesystemName -Directory -Path dir0/dir1
+        New-AzDataLakeGen2Item -Context $ctxhns -FileSystem $filesystemName -Directory -Path dir0/dir2
+        New-AzDataLakeGen2Item -Context $ctxhns -FileSystem $filesystemName -Path dir0/dir1/file1 -Source $localSrcFile -Force
+        New-AzDataLakeGen2Item -Context $ctxhns -FileSystem $filesystemName -Path dir0/dir1/file2 -Source $localSrcFile -Force
+        New-AzDataLakeGen2Item -Context $ctxhns -FileSystem $filesystemName -Path dir0/dir2/file3 -Source $localSrcFile -Force
+        New-AzDataLakeGen2Item -Context $ctxhns -FileSystem $filesystemName -Path dir0/dir2/file4 -Source $localSrcFile -Force 
 
-        $items = Get-AzDataLakeGen2ChildItem -Context $ctx -FileSystem $filesystemName -Recurse
+        $items = Get-AzDataLakeGen2ChildItem -Context $ctxhns -FileSystem $filesystemName -Recurse
         $items.Count | should -be 8
 
-        Remove-AzDataLakeGen2Item -Context $ctx -FileSystem $filesystemName -Force -Path dir0/dir1/file1
-        Remove-AzDataLakeGen2Item -Context $ctx -FileSystem $filesystemName -Force -Path dir0/dir2/file3 
-        Remove-AzDataLakeGen2Item -Context $ctx -FileSystem $filesystemName -Force -Path dir0/dir2        
+        Remove-AzDataLakeGen2Item -Context $ctxhns -FileSystem $filesystemName -Force -Path dir0/dir1/file1
+        Remove-AzDataLakeGen2Item -Context $ctxhns -FileSystem $filesystemName -Force -Path dir0/dir2/file3 
+        Remove-AzDataLakeGen2Item -Context $ctxhns -FileSystem $filesystemName -Force -Path dir0/dir2        
 
-        $items = Get-AzDataLakeGen2ChildItem -Context $ctx -FileSystem $filesystemName -Recurse
+        $items = Get-AzDataLakeGen2ChildItem -Context $ctxhns -FileSystem $filesystemName -Recurse
         $items.Count | should -be 4
 
-        $items = Get-AzDataLakeGen2DeletedItem -Context $ctx -FileSystem $filesystemName -Path dir0/dir2
+        $items = Get-AzDataLakeGen2DeletedItem -Context $ctxhns -FileSystem $filesystemName -Path dir0/dir2
         $items.Count | should -be 2
 
-        $items = Get-AzDataLakeGen2DeletedItem -Context $ctx -FileSystem $filesystemName 
+        $items = Get-AzDataLakeGen2DeletedItem -Context $ctxhns -FileSystem $filesystemName 
         $items.Count | should -be 3
 
         # item[0] should be dir0/dir1/file1
@@ -1126,17 +1134,17 @@ Describe "dataplane test" {
         $items0.File.Exists() | should -be $true
         
         # item[1] should be dir0/dir2
-        $items1 = Restore-AzDataLakeGen2DeletedItem -Context $ctx -FileSystem $filesystemName  -Path $items[1].Path -DeletionId $items[1].DeletionId 
+        $items1 = Restore-AzDataLakeGen2DeletedItem -Context $ctxhns -FileSystem $filesystemName  -Path $items[1].Path -DeletionId $items[1].DeletionId 
         $items1.Path | should -be $items[1].Path
         $items1.Directory.Exists() | should -be $true
 
-        $items = Get-AzDataLakeGen2DeletedItem -Context $ctx -FileSystem $filesystemName 
+        $items = Get-AzDataLakeGen2DeletedItem -Context $ctxhns -FileSystem $filesystemName 
         $items.Count | should -be 1
 
-        $items = Get-AzDataLakeGen2ChildItem -Context $ctx -FileSystem $filesystemName -Recurse
+        $items = Get-AzDataLakeGen2ChildItem -Context $ctxhns -FileSystem $filesystemName -Recurse
         $items.Count | should -be 7
 
-        Remove-AzDatalakeGen2FileSystem -Name $filesystemName -Context $ctx -Force
+        Remove-AzDatalakeGen2FileSystem -Name $filesystemName -Context $ctxhns -Force
 
         $Error.Count | should -be 0
     }
@@ -1936,7 +1944,7 @@ Describe "dataplane test" {
         $containername1 = GetRandomContainerName + "cold"
         New-AzStorageContainer -Name $containername1 -Context $ctx
 
-        $blob = Set-AzStorageBlobContent -Container $containername1 -File $localSmallSrcFile -Blob test1 -StandardBlobTier Cold -Properties @{"ContentType" = "image/jpeg"} -Metadata @{"tag1" = "value1"} -Context $ctx 
+        $blob = Set-AzStorageBlobContent -Container $containername1 -File $localSmallSrcFile -Blob test1 -StandardBlobTier Cold -Properties @{"ContentType" = "image/jpeg"} -Metadata @{"tag1" = "value1"} -Context $ctx -Force
         $blob.Name | Should -Be "test1"
         $blob.AccessTier | Should -Be "Cold"
         $blob.BlobProperties.ContentType | Should -Be "image/jpeg"
@@ -1997,13 +2005,12 @@ Describe "dataplane test" {
         $qs.Count | Should -BeGreaterOrEqual 2
         
         $q = Get-AzStorageQueue -Name $queuename -Context $ctx
-        $queueMessage = New-Object -TypeName "Microsoft.Azure.Storage.Queue.CloudQueueMessage,$($q.CloudQueue.GetType().Assembly.FullName)" -ArgumentList "This is message 1"
-        $q.CloudQueue.AddMessageAsync($QueueMessage)
+        $queueMessage = "This is message 1"
+        $q.QueueClient.SendMessage($QueueMessage)
         $q = Get-AzStorageQueue -Name $queuename -Context $ctxoauth1
         $q.Name | Should -Be $queuename
         $q.ApproximateMessageCount | Should -Be 1 
         $q.QueueProperties.ApproximateMessagesCount | Should -Be 1 
-        $q.CloudQueue.ApproximateMessageCount | Should -Be 1 
 
         $sas = New-AzStorageAccountSASToken -Service Queue -ResourceType Container,Object,Service -Permission rwdl -ExpiryTime 3000-01-01 -Context $ctx 
         $ctxaccountsas = New-AzStorageContext -StorageAccountName $storageAccountName -SasToken $sas
@@ -2071,6 +2078,7 @@ Describe "dataplane test" {
  
         $localSrcFile = ".\data\testfile_1K_0"
         $localSrcFileName = "testfile_1K_0"
+        $localLargeSrcFile = ".\data\testfile_307200K_0" # File of size 300M. Needs to be created beforehand
         $localDestFile = ".\created\testoauth" # test will create the file
         $localDestFileName = "testoauth"
         $shareName = "sharefileoauth"
@@ -2079,9 +2087,9 @@ Describe "dataplane test" {
         $filepath = "dir1\test1"
 
         # create oauth context
-        $secpasswd = ConvertTo-SecureString $globalNode.secPwd -AsPlainText -Force
-        $cred = New-Object System.Management.Automation.PSCredential ($globalNode.applicationId, $secpasswd)
-        Add-AzAccount -ServicePrincipal -Tenant $globalNode.tenantId -SubscriptionId $globalNode.subscriptionId -Credential $cred 
+        #$secpasswd = ConvertTo-SecureString $globalNode.secPwd -AsPlainText -Force
+        #$cred = New-Object System.Management.Automation.PSCredential ($globalNode.applicationId, $secpasswd)
+        #Add-AzAccount -ServicePrincipal -Tenant $globalNode.tenantId -SubscriptionId $globalNode.subscriptionId -Credential $cred 
 
         $ctxoauth = New-AzStorageContext -StorageAccountName $accountname -EnableFileBackupRequestIntent
         $ctxkey = (Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $accountname).Context
@@ -2092,7 +2100,7 @@ Describe "dataplane test" {
         Set-AzStorageFileContent -ShareName $shareName -Source $localSrcFile -Path $filename -Context $ctxoauth
         New-AzStorageDirectory -ShareName $shareName -Path $dirname -Context $ctxoauth
 
-        # Share object w/0 fetching properties with OAuth 
+        # Share object w/o fetching properties with OAuth 
         $share = Get-AzStorageShare -Name $shareName -Context $ctxoauth -SkipGetProperty
         $dir = $share | Get-AzStorageFile -Path $dirname 
         $file = $share | Get-AzStorageFile -Path $filename
@@ -2417,6 +2425,7 @@ Describe "dataplane test" {
 
         $sharename = "testshare1"
         $share = New-AzStorageShare -Name $sharename -Context $ctx 
+        $share = Get-AzStorageShare -Name $sharename -Context $ctx 
 
         # Default: allow 
         $f =  Get-AzStorageFile -ShareName $sharename -Context $ctx 

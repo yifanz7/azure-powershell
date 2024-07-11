@@ -206,9 +206,9 @@ Describe "dataplane test" {
         $sasrd = New-AzStorageContainerSASToken -Name $filesystemName -Permission rd -Context $ctx
         $sasctxrd = New-AzStorageContext -StorageAccountName $ctx.StorageAccountName -SasToken $sasrd
         $sasw = New-AzStorageContainerSASToken -Name $filesystemName -Permission w -Context $ctx
-        $dir3 = Move-AzDataLakeGen2Item -Context $sasctxrd -FileSystem $filesystemName -Path $dirname1 -DestFileSystem $filesystemName -DestPath "$($dirname3)$($sasw)" -Force
+        $dir3 = Move-AzDataLakeGen2Item -Context $sasctxrd -FileSystem $filesystemName -Path $dirname1 -DestFileSystem $filesystemName -DestPath "$($dirname3)?$($sasw)" -Force
         $dir3
-        $dir1 = Move-AzDataLakeGen2Item -Context $sasctxrd -FileSystem $filesystemName -Path $dirname3 -DestFileSystem $filesystemName -DestPath "$($dirname1)$($sasw)"
+        $dir1 = Move-AzDataLakeGen2Item -Context $sasctxrd -FileSystem $filesystemName -Path $dirname3 -DestFileSystem $filesystemName -DestPath "$($dirname1)?$($sasw)"
         $dir1
 
         ## move file, then move back with pipeline
