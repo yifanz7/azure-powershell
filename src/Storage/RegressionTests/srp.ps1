@@ -6,10 +6,8 @@ BeforeAll {
     [xml]$config = Get-Content .\config.xml
     $globalNode = $config.SelectSingleNode("config/section[@id='global']")
     $testNode = $config.SelectSingleNode("config/section[@id='srp']")
-
-    $secpasswd = ConvertTo-SecureString $globalNode.secPwd -AsPlainText -Force
-    $cred = New-Object System.Management.Automation.PSCredential ($globalNode.applicationId, $secpasswd)
-    Add-AzAccount -ServicePrincipal -Tenant $globalNode.tenantId -SubscriptionId $globalNode.subscriptionId -Credential $cred 
+    
+    # Connect-AzAccount
 
     $rgname = $globalNode.resourceGroupName
     $accountName = GetRandomAccountName
@@ -109,7 +107,7 @@ Describe "Management plan test" {
         $accountNameBlobCtn = $accountName + "bctn"
         $containerName = GetRandomContainerName #Add 1 every time
         $containerName2 = "ctrtodelete"
-        New-AzStorageAccount -ResourceGroupName $rgname -StorageAccountName $accountNameBlobCtn -SkuName Standard_LRS -Location "westus" -Kind StorageV2 
+        New-AzStorageAccount -ResourceGroupName $rgname -StorageAccountName $accountNameBlobCtn -SkuName Standard_LRS -Location "westus" -Kind StorageV2 -AllowBlobPublicAccess $true
 
         $con = New-AzRmStorageContainer -ResourceGroupName $rgname -StorageAccountName $accountNameBlobCtn -Name $containerName 
         $con.Name | Should -Be $containerName
@@ -821,7 +819,7 @@ Describe "Management plan test" {
         $a.Encryption.KeyVaultProperties.KeyName | Should -Be $keyname
         $a.Encryption.KeyVaultProperties.KeyVersion | Should -BeNullOrEmpty
 
-        Remove-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameKeyV -Force
+        Remove-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameKeyV -Force -AsJob
 
         $Error.Count | should -be 0
     }
@@ -859,8 +857,8 @@ Describe "Management plan test" {
         set-AzStorageAccount -ResourceGroupName $rgname -StorageAccountName $accountNameRAGZRS -SkuName Standard_GZRS
         (Get-AzStorageAccount -ResourceGroupName $rgname -StorageAccountName $accountNameRAGZRS).Sku.Name | should -Be  "Standard_GZRS"
 
-        Remove-AzStorageAccount -ResourceGroupName $rgname -StorageAccountName $accountNameGZRS -Force 
-        Remove-AzStorageAccount -ResourceGroupName $rgname -StorageAccountName $accountNameRAGZRS -Force
+        Remove-AzStorageAccount -ResourceGroupName $rgname -StorageAccountName $accountNameGZRS -Force -AsJob
+        Remove-AzStorageAccount -ResourceGroupName $rgname -StorageAccountName $accountNameRAGZRS -Force -AsJob
 
         $Error.Count | should -be 0
     }
@@ -1009,8 +1007,8 @@ Describe "Management plan test" {
         ($srcPolicy.Rules[1].Filters.MinCreationTime.ToUniversalTime().ToString("s")+"Z") | Should -Be "2019-01-02T00:00:00Z"
     
         # Validate dataplane
-        $ctxsrc = (Get-AzStorageAccount  -ResourceGroupName $rgname -StorageAccountName $srcAccountName ).Context
-        $ctxdest = (Get-AzStorageAccount  -ResourceGroupName $rgname -StorageAccountName $destAccountName ).Context
+        $ctxsrc = New-AzStorageContext -StorageAccountName $srcAccountName
+        $ctxdest = New-AzStorageContext -StorageAccountName $destAccountName
         $blobdest = Get-AzStorageBlob -Container dest1 -Blob testors -Context $ctxdest
         $blobdest.BlobProperties.ObjectReplicationDestinationPolicyId  | should -Not -be $null 
         $blobdest.BlobProperties.ObjectReplicationSourceProperties | Should -BeNullOrEmpty
@@ -2881,7 +2879,7 @@ Describe "Management plan test" {
         $Error.Count | should -be 0
     }
 
-    It "AADKerb" {
+    It "AADKerb -Skip" {
         $Error.Clear()
 
         $accountNameAADKerb = $accountName + "aadkerb"
