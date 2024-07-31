@@ -669,6 +669,12 @@ Describe "Management plan test" {
         $share.AccessTier | Should -Be "Cool"
         #$share = $share | Update-AzRmStorageShare  -AccessTier TransactionOptimized 
         #Assert-AreEqual "TransactionOptimized" $share.AccessTier
+
+        $shares = Get-AzRmStorageShare -ResourceGroupName $rgname -StorageAccountName $accountNameLFS -Filter "startswith(name, test)" 
+        $shares.Count | Should -Be 1 
+        $shares = Get-AzRmStorageShare -ResourceGroupName $rgname -StorageAccountName $accountNameLFS -Filter "startswith(name, something)"
+        $shares.Count | Should -Be 0 
+
         Remove-AzRmStorageShare -ResourceGroupName $rgname -StorageAccountName $accountNameLFS -Name testsshare -Force      
      
 
