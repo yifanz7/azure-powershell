@@ -15,7 +15,8 @@ BeforeAll {
 
     $rgname = $globalNode.resourceGroupName
     $accountName = $testNode.accountName
-    $ctx = (Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountName).Context
+    $ctx = New-AzStorageContext -StorageAccountName $accountName
+    #$ctx = (Get-AzStorageAccount -ResourceGroupName $rgname -Name $accountName).Context
 
     $localSrcFile = ".\data\testfile_1K_0" #The file need exist before test, and should be 512 bytes aligned
     $localDestFile = ".\created\test1.txt" # test will create the file

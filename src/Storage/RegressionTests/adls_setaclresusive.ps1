@@ -39,9 +39,7 @@ BeforeAll {
     $globalNode = $config.SelectSingleNode("config/section[@id='global']")
     $testNode = $config.SelectSingleNode("config/section[@id='adlsSetAcl']")
     
-    $secpasswd = ConvertTo-SecureString $globalNode.secPwd -AsPlainText -Force
-    $cred = New-Object System.Management.Automation.PSCredential ($globalNode.applicationId, $secpasswd)
-    Add-AzAccount -ServicePrincipal -Tenant $globalNode.tenantId -SubscriptionId $globalNode.subscriptionId -Credential $cred 
+    # Add-AzAccount
 
     $resourceGroupName = $globalNode.resourceGroupName
     $storageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $resourceGroupName -Name $testNode.accountName)[0].Value
