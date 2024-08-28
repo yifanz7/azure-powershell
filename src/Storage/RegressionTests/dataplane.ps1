@@ -17,7 +17,7 @@ BeforeAll {
     #$cred = New-Object System.Management.Automation.PSCredential ($globalNode.applicationId, $secpasswd)
     #Add-AzAccount -ServicePrincipal -Tenant $globalNode.tenantId -SubscriptionId $globalNode.subscriptionId -Credential $cred 
 
-    COnnect-AzAccount
+    # COnnect-AzAccount
     $ctxoauth1 = New-AzStorageContext -StorageAccountName $storageAccountName
     $ctxoauth2 = New-AzStorageContext -StorageAccountName $storageAccountName2
 

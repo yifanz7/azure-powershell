@@ -945,7 +945,7 @@ Describe "Management plan test" {
             Get-AzStorageAccount -ResourceGroupName $rgname -StorageAccountName $srcAccountName
 
             Update-AzStorageBlobServiceProperty -ResourceGroupName $rgname -StorageAccountName $destAccountName -IsVersioningEnabled $false -EnableChangeFeed $true
-            Update-AzStorageBlobServiceProperty -ResourceGroupName $rgname -StorageAccountName $destAccountName -IsVersioningEnabled $true -EnableChangeFeed $true
+            Update-AzStorageBlobServiceProperty -ResourceGroupName $rgname -StorageAccountName $srctAccountName -IsVersioningEnabled $true -EnableChangeFeed $true
             Get-AzStorageBlobServiceProperty -ResourceGroupName $rgname -StorageAccountName $destAccountName
             Get-AzStorageBlobServiceProperty -ResourceGroupName $rgname -StorageAccountName $srcAccountName
 
@@ -960,9 +960,9 @@ Describe "Management plan test" {
             $ctxsrc = (Get-AzStorageAccount -ResourceGroupName $rgname -StorageAccountName $srcAccountName).Context
             $ctxdest = (Get-AzStorageAccount -ResourceGroupName $rgname -StorageAccountName $destAccountName).Context
 
-            Set-AzStorageBlobContent -Container src1 -File D:\TestBlob1 -Blob testors -Context $ctxsrc
+            Set-AzStorageBlobContent -Container src1 -File D:\TestBlob1 -Blob testors -Context $ctxsrc -Force
 
-            Set-AzStorageBlobContent -Container dest1 -File D:\TestBlob1 -Blob testors -Context $ctxdest
+            Set-AzStorageBlobContent -Container dest1 -File D:\TestBlob1 -Blob testors -Context $ctxdest -Force
         }
         
         # enable AllowCrossTenantReplication

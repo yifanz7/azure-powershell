@@ -175,7 +175,7 @@ function Upload_Download_FileTree
 
 function Upload_Download_BlobTree
 {
-    param([Microsoft.WindowsAzure.Commands.Storage.AzureStorageContext]$context, [string]$rootFolder, [string]$blobType = "Block")
+    param([Microsoft.WindowsAzure.Commands.Storage.common.AzureStorageContext]$context, [string]$rootFolder, [string]$blobType = "Block")
 
     $containerName = GetRandomContainerName
 
@@ -233,7 +233,7 @@ function ValidBlob
     
 function uploadblob
 {
-    param([Microsoft.WindowsAzure.Commands.Storage.AzureStorageContext]$context)
+    param([Microsoft.WindowsAzure.Commands.Storage.Common.AzureStorageContext]$context)
 
     $b = Set-AzStorageBlobContent  -Context $context -File $localSrcFile -Container $containerName_es -Blob block -BlobType Block  -EncryptionScope $scopeName1 `
     -Properties @{"ContentType" = "image/jpeg"} -Metadata @{"tag1" = "value1"; "tag2" = "value22" } -Force  
