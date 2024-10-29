@@ -1071,7 +1071,7 @@ Describe "dataplane test" {
         $Error.Clear()        
         
         # Disk is https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/{SubscriptionId}/resourceGroups/weitry/providers/Microsoft.Compute/disks/weioauthsas_download1G/overview
-        $DiskName = $testNode.downloadManagedDisk.diskName
+        $DiskName = "yifantestdisksasoauth" #$testNode.downloadManagedDisk.diskName
 
         #Generate the SAS Uri to download
         New-AzDiskUpdateConfig -DataAccessAuthMode "AzureActiveDirectory" | Update-AzDisk -ResourceGroupName $resourceGroupName -DiskName $DiskName

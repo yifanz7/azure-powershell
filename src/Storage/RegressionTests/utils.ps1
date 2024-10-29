@@ -132,7 +132,7 @@ function CompareFileFileList
 
 function Upload_Download_FileTree
 {
-    param([Microsoft.WindowsAzure.Commands.Storage.AzureStorageContext]$context, [string]$rootFolder)
+    param([Microsoft.WindowsAzure.Commands.Storage.Common.AzureStorageContext]$context, [string]$rootFolder)
 
     $containerName = GetRandomContainerName
 
