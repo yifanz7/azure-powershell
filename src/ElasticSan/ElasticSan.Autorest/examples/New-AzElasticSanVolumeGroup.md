@@ -56,7 +56,7 @@ This command creates a volume group with the NetworkAclsVirtualNetworkRule input
 
 ### Example 3: Create a volume group with platform-managed key and SystemAssigned identity type 
 ```powershell
-New-AzElasticSanVolumeGroup -ResourceGroupName myresourcegroup -ElasticSanName myelasticsan -Name myvolumegroup -IdentityType SystemAssigned -ProtocolType Iscsi -Encryption EncryptionAtRestWithPlatformKey
+New-AzElasticSanVolumeGroup -ResourceGroupName myresourcegroup -ElasticSanName myelasticsan -Name myvolumegroup -EnableSystemAssignedIdentity -ProtocolType Iscsi -Encryption EncryptionAtRestWithPlatformKey
 ```
 
 ```output
@@ -96,7 +96,7 @@ This command creates a volume group with identity type "SystemAssigned" and encr
 ```powershell
 $useridentity = Get-AzUserAssignedIdentity -ResourceGroupName myresoucegroup -Name myuai
 
-New-AzElasticSanVolumeGroup -ResourceGroupName myresoucegroup -ElasticSanName myelasticsan -Name myvolumegroup -IdentityType UserAssigned -IdentityUserAssignedIdentityId $useridentity.Id -Encryption EncryptionAtRestWithCustomerManagedKey -KeyName mykey -KeyVaultUri "https://mykeyvault.vault.azure.net:443" -EncryptionUserAssignedIdentity $useridentity.Id -ProtocolType Iscsi
+New-AzElasticSanVolumeGroup -ResourceGroupName myresoucegroup -ElasticSanName myelasticsan -Name myvolumegroup -UserAssignedIdentity $useridentity.Id -Encryption EncryptionAtRestWithCustomerManagedKey -KeyName mykey -KeyVaultUri "https://mykeyvault.vault.azure.net:443" -EncryptionUserAssignedIdentity $useridentity.Id -ProtocolType Iscsi
 ```
 
 ```output

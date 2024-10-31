@@ -15,30 +15,30 @@ Create a Volume Group.
 ### CreateExpanded (Default)
 ```
 New-AzElasticSanVolumeGroup -ElasticSanName <String> -Name <String> -ResourceGroupName <String>
- [-SubscriptionId <String>] [-Encryption <String>] [-EncryptionUserAssignedIdentity <String>]
- [-EnforceDataIntegrityCheckForIscsi <Boolean>] [-IdentityType <String>]
- [-IdentityUserAssignedIdentityId <String>] [-KeyName <String>] [-KeyVaultUri <String>] [-KeyVersion <String>]
- [-NetworkAclsVirtualNetworkRule <IVirtualNetworkRule[]>] [-ProtocolType <String>]
- [-DefaultProfile <PSObject>] [-AsJob] [-NoWait] [-Confirm] [-WhatIf] [<CommonParameters>]
+ [-SubscriptionId <String>] [-EnableSystemAssignedIdentity] [-Encryption <String>]
+ [-EncryptionUserAssignedIdentity <String>] [-EnforceDataIntegrityCheckForIscsi <Boolean>] [-KeyName <String>]
+ [-KeyVaultUri <String>] [-KeyVersion <String>] [-NetworkAclsVirtualNetworkRule <IVirtualNetworkRule[]>]
+ [-ProtocolType <String>] [-UserAssignedIdentity <String[]>] [-DefaultProfile <PSObject>] [-AsJob] [-NoWait]
+ [-Confirm] [-WhatIf] [<CommonParameters>]
 ```
 
 ### CreateViaIdentityElasticSanExpanded
 ```
-New-AzElasticSanVolumeGroup -ElasticSanInputObject <IElasticSanIdentity> -Name <String> [-Encryption <String>]
- [-EncryptionUserAssignedIdentity <String>] [-EnforceDataIntegrityCheckForIscsi <Boolean>]
- [-IdentityType <String>] [-IdentityUserAssignedIdentityId <String>] [-KeyName <String>]
- [-KeyVaultUri <String>] [-KeyVersion <String>] [-NetworkAclsVirtualNetworkRule <IVirtualNetworkRule[]>]
- [-ProtocolType <String>] [-DefaultProfile <PSObject>] [-AsJob] [-NoWait] [-Confirm] [-WhatIf]
+New-AzElasticSanVolumeGroup -ElasticSanInputObject <IElasticSanIdentity> -Name <String>
+ [-EnableSystemAssignedIdentity] [-Encryption <String>] [-EncryptionUserAssignedIdentity <String>]
+ [-EnforceDataIntegrityCheckForIscsi <Boolean>] [-KeyName <String>] [-KeyVaultUri <String>]
+ [-KeyVersion <String>] [-NetworkAclsVirtualNetworkRule <IVirtualNetworkRule[]>] [-ProtocolType <String>]
+ [-UserAssignedIdentity <String[]>] [-DefaultProfile <PSObject>] [-AsJob] [-NoWait] [-Confirm] [-WhatIf]
  [<CommonParameters>]
 ```
 
 ### CreateViaIdentityExpanded
 ```
-New-AzElasticSanVolumeGroup -InputObject <IElasticSanIdentity> [-Encryption <String>]
- [-EncryptionUserAssignedIdentity <String>] [-EnforceDataIntegrityCheckForIscsi <Boolean>]
- [-IdentityType <String>] [-IdentityUserAssignedIdentityId <String>] [-KeyName <String>]
- [-KeyVaultUri <String>] [-KeyVersion <String>] [-NetworkAclsVirtualNetworkRule <IVirtualNetworkRule[]>]
- [-ProtocolType <String>] [-DefaultProfile <PSObject>] [-AsJob] [-NoWait] [-Confirm] [-WhatIf]
+New-AzElasticSanVolumeGroup -InputObject <IElasticSanIdentity> [-EnableSystemAssignedIdentity]
+ [-Encryption <String>] [-EncryptionUserAssignedIdentity <String>]
+ [-EnforceDataIntegrityCheckForIscsi <Boolean>] [-KeyName <String>] [-KeyVaultUri <String>]
+ [-KeyVersion <String>] [-NetworkAclsVirtualNetworkRule <IVirtualNetworkRule[]>] [-ProtocolType <String>]
+ [-UserAssignedIdentity <String[]>] [-DefaultProfile <PSObject>] [-AsJob] [-NoWait] [-Confirm] [-WhatIf]
  [<CommonParameters>]
 ```
 
@@ -105,7 +105,7 @@ This command creates a volume group with the NetworkAclsVirtualNetworkRule input
 
 ### Example 3: Create a volume group with platform-managed key and SystemAssigned identity type 
 ```powershell
-New-AzElasticSanVolumeGroup -ResourceGroupName myresourcegroup -ElasticSanName myelasticsan -Name myvolumegroup -IdentityType SystemAssigned -ProtocolType Iscsi -Encryption EncryptionAtRestWithPlatformKey
+New-AzElasticSanVolumeGroup -ResourceGroupName myresourcegroup -ElasticSanName myelasticsan -Name myvolumegroup -EnableSystemAssignedIdentity -ProtocolType Iscsi -Encryption EncryptionAtRestWithPlatformKey
 ```
 
 ```output
@@ -145,7 +145,7 @@ This command creates a volume group with identity type "SystemAssigned" and encr
 ```powershell
 $useridentity = Get-AzUserAssignedIdentity -ResourceGroupName myresoucegroup -Name myuai
 
-New-AzElasticSanVolumeGroup -ResourceGroupName myresoucegroup -ElasticSanName myelasticsan -Name myvolumegroup -IdentityType UserAssigned -IdentityUserAssignedIdentityId $useridentity.Id -Encryption EncryptionAtRestWithCustomerManagedKey -KeyName mykey -KeyVaultUri "https://mykeyvault.vault.azure.net:443" -EncryptionUserAssignedIdentity $useridentity.Id -ProtocolType Iscsi
+New-AzElasticSanVolumeGroup -ResourceGroupName myresoucegroup -ElasticSanName myelasticsan -Name myvolumegroup -UserAssignedIdentity $useridentity.Id -Encryption EncryptionAtRestWithCustomerManagedKey -KeyName mykey -KeyVaultUri "https://mykeyvault.vault.azure.net:443" -EncryptionUserAssignedIdentity $useridentity.Id -ProtocolType Iscsi
 ```
 
 ```output
@@ -285,6 +285,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -EnableSystemAssignedIdentity
+Decides if enable a system assigned identity for the resource.
+
+```yaml
+Type: System.Management.Automation.SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Encryption
 Type of encryption
 
@@ -320,37 +335,6 @@ A boolean indicating whether or not Data Integrity Check is enabled
 
 ```yaml
 Type: System.Boolean
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IdentityType
-The identity type.
-
-```yaml
-Type: System.String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IdentityUserAssignedIdentityId
-Gets or sets a list of key value pairs that describe the set of User Assigned identities that will be used with this volume group.
-The key is the ARM resource identifier of the identity.
-
-```yaml
-Type: System.String
 Parameter Sets: (All)
 Aliases:
 
@@ -510,6 +494,22 @@ Aliases:
 Required: False
 Position: Named
 Default value: (Get-AzContext).Subscription.Id
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UserAssignedIdentity
+The array of user assigned identities associated with the resource.
+The elements in array will be ARM resource ids in the form: '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}.'
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases: IdentityUserAssignedIdentityId
+
+Required: False
+Position: Named
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

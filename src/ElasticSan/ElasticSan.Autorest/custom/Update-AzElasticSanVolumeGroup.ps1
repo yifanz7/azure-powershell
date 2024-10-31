@@ -123,21 +123,21 @@ function Update-AzElasticSanVolumeGroup {
         [System.String]
         # Resource identifier of the UserAssigned identity to be associated with server-side encryption on the volume group.
         ${EncryptionUserAssignedIdentity},
-    
-        [Parameter()]
-        [Microsoft.Azure.PowerShell.Cmdlets.ElasticSan.Runtime.ParameterBreakingChange("IdentityType", "13.0.0", "2.0.0", "2024/11/19", ChangeDescription="IdentityType will be removed. EnableSystemAssignedIdentity will be used to enable/disable system assigned identity and UserAssignedIdentity will be used to specify user assigned identities.")]
-        [Microsoft.Azure.PowerShell.Cmdlets.ElasticSan.PSArgumentCompleterAttribute("None", "SystemAssigned", "UserAssigned")]
-        [Microsoft.Azure.PowerShell.Cmdlets.ElasticSan.Category('Body')]
-        [System.String]
-        # The identity type.
-        ${IdentityType},
-    
+
         [Parameter()]
         [Microsoft.Azure.PowerShell.Cmdlets.ElasticSan.Category('Body')]
-        [System.String]
-        # Gets or sets a list of key value pairs that describe the set of User Assigned identities that will be used with this volume group.
-        # The key is the ARM resource identifier of the identity.
-        ${IdentityUserAssignedIdentityId},
+        [System.Nullable[System.Boolean]]
+        # Decides if enable a system assigned identity for the resource.
+        ${EnableSystemAssignedIdentity},
+
+        [Parameter()]
+        [AllowEmptyCollection()]
+        [Alias('IdentityUserAssignedIdentityId')]
+        [Microsoft.Azure.PowerShell.Cmdlets.ElasticSan.Category('Body')]
+        [System.String[]]
+        # The array of user assigned identities associated with the resource.
+        # The elements in array will be ARM resource ids in the form: '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}.'
+        ${UserAssignedIdentity},
     
         [Parameter()]
         [Microsoft.Azure.PowerShell.Cmdlets.ElasticSan.Category('Body')]
@@ -234,39 +234,39 @@ function Update-AzElasticSanVolumeGroup {
     )
     
     process {
-        if ($PSBoundParameters.ContainsKey('IdentityUserAssignedIdentityId')) {
-            $userIdentityObject = [Microsoft.Azure.PowerShell.Cmdlets.ElasticSan.Models.UserAssignedIdentity]::New()
-            # $userAssignedIdentityId = $IdentityUserAssignedIdentityId
-            $PSBoundParameters.IdentityUserAssignedIdentity = @{$IdentityUserAssignedIdentityId=$userIdentityObject}   
+        # if ($PSBoundParameters.ContainsKey('IdentityUserAssignedIdentityId')) {
+        #     $userIdentityObject = [Microsoft.Azure.PowerShell.Cmdlets.ElasticSan.Models.UserAssignedIdentity]::New()
+        #     # $userAssignedIdentityId = $IdentityUserAssignedIdentityId
+        #     $PSBoundParameters.IdentityUserAssignedIdentity = @{$IdentityUserAssignedIdentityId=$userIdentityObject}   
             
-            $volumeGroupProperties = $null
-            switch ($PSCmdlet.ParameterSetName) {
-                "UpdateViaIdentityElasticSanExpanded" {
-                    $elasticSanId = $ElasticSanInputObject.Id
-                    $volumeGroupProperties = $ElasticSanInputObject | Az.ElasticSan\Get-AzElasticSanVolumeGroup -Name $Name
-                    $PSBoundParameters.ElasticSanInputObject.Id = $elasticSanId
-                    break
-                }
-                "UpdateViaIdentityExpanded" {
-                    $volumeGroupProperties = $InputObject | Az.ElasticSan\Get-AzElasticSanVolumeGroup
-                    break
-                }
-                Default {
-                    $volumeGroupProperties = AZ.ElasticSan\Get-AzElasticSanVolumeGroup -Name $Name -ResourceGroupName $ResourceGroupName -ElasticSanName $ElasticSanName
-                    break 
-                }
-            }
+        #     $volumeGroupProperties = $null
+        #     switch ($PSCmdlet.ParameterSetName) {
+        #         "UpdateViaIdentityElasticSanExpanded" {
+        #             $elasticSanId = $ElasticSanInputObject.Id
+        #             $volumeGroupProperties = $ElasticSanInputObject | Az.ElasticSan\Get-AzElasticSanVolumeGroup -Name $Name
+        #             $PSBoundParameters.ElasticSanInputObject.Id = $elasticSanId
+        #             break
+        #         }
+        #         "UpdateViaIdentityExpanded" {
+        #             $volumeGroupProperties = $InputObject | Az.ElasticSan\Get-AzElasticSanVolumeGroup
+        #             break
+        #         }
+        #         Default {
+        #             $volumeGroupProperties = AZ.ElasticSan\Get-AzElasticSanVolumeGroup -Name $Name -ResourceGroupName $ResourceGroupName -ElasticSanName $ElasticSanName
+        #             break 
+        #         }
+        #     }
 
-            if ($volumeGroupProperties.IdentityUserAssignedIdentity -ne $null) {
-                $volumeGroupProperties.IdentityUserAssignedIdentity.Keys | ForEach-Object {
-                    if ($_ -ne $IdentityUserAssignedIdentityId) {
-                        # $PSBoundParameters.IdentityUserAssignedIdentity.Add($_, $userIdentityObject)
-                        $PSBoundParameters.IdentityUserAssignedIdentity.Add($_, $null)
-                    }
-                }
-            }
-            $null = $PSBoundParameters.Remove('IdentityUserAssignedIdentityId')
-        }
+        #     if ($volumeGroupProperties.IdentityUserAssignedIdentity -ne $null) {
+        #         $volumeGroupProperties.IdentityUserAssignedIdentity.Keys | ForEach-Object {
+        #             if ($_ -ne $IdentityUserAssignedIdentityId) {
+        #                 # $PSBoundParameters.IdentityUserAssignedIdentity.Add($_, $userIdentityObject)
+        #                 $PSBoundParameters.IdentityUserAssignedIdentity.Add($_, $null)
+        #             }
+        #         }
+        #     }
+        #     $null = $PSBoundParameters.Remove('IdentityUserAssignedIdentityId')
+        # }
 
         if ($PSBoundParameters.ContainsKey("EnforceDataIntegrityCheckForIscsi") -and ($PSBoundParameters.EnforceDataIntegrityCheckForIscsi -eq $true)) {
             Write-Warning "This needs CRC32C to be set on header and data digests on the client for all the connections from the client to the volumes in this volume group. You can do this by disconnecting the volumes from the client and reconnecting using multi-session scripts generated in portal connect flow or from documentation, which contain steps to set CRC32C on header and data digests. Do not enable CRC protection on the volume group if you are using Fedora or its downstream Linux distributions such as RHEL, CentOS etc. as data digests are not supported on them. If you enable this flag for those distributions, connectivity to the volumes will fail. Refer to https://learn.microsoft.com/en-us/azure/storage/elastic-san/elastic-san-create?tabs=azure-portal for more information."

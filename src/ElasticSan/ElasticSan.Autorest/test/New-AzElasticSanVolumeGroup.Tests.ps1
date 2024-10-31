@@ -26,7 +26,7 @@ Describe 'New-AzElasticSanVolumeGroup' {
         $volGroup.EnforceDataIntegrityCheckForIscsi | Should -Be $true
 
         $volGroupName2 = 'testvolgroup2' + $env.RandomString
-        $volGroup = New-AzElasticSanVolumeGroup -ResourceGroupName $env.ResourceGroupName -ElasticSanName $env.ElasticSanName1 -Name $volGroupName2 -ProtocolType 'Iscsi' -IdentityType 'SystemAssigned' -Encryption EncryptionAtRestWithPlatformKey -EnforceDataIntegrityCheckForIscsi $false
+        $volGroup = New-AzElasticSanVolumeGroup -ResourceGroupName $env.ResourceGroupName -ElasticSanName $env.ElasticSanName1 -Name $volGroupName2 -ProtocolType 'Iscsi' -EnableSystemAssignedIdentity -Encryption EncryptionAtRestWithPlatformKey -EnforceDataIntegrityCheckForIscsi $false
         $volGroup.Name | Should -Be $volGroupName2
         $volGroup.Encryption | Should -Be "EncryptionAtRestWithPlatformKey"
         $volGroup.ProtocolType | Should -Be "Iscsi"
@@ -34,7 +34,7 @@ Describe 'New-AzElasticSanVolumeGroup' {
         $volGroup.EnforceDataIntegrityCheckForIscsi | Should -Be $false
 
         $volGroupName3 = 'testvolgroup3' + $env.RandomString
-        $volGroup = New-AzElasticSanVolumeGroup -ResourceGroupName $env.ResourceGroupName -ElasticSanName $env.ElasticSanName1 -Name $volGroupName3 -IdentityType 'UserAssigned'-IdentityUserAssignedIdentity $env.Useridentity.Id -Encryption EncryptionAtRestWithCustomerManagedKey -KeyName $env.Keyname -KeyVaultUri $env.KeyvaultUri -EncryptionUserAssignedIdentity $env.Useridentity.Id -ProtocolType Iscsi
+        $volGroup = New-AzElasticSanVolumeGroup -ResourceGroupName $env.ResourceGroupName -ElasticSanName $env.ElasticSanName1 -Name $volGroupName3 -UserAssignedIdentity $env.Useridentity.Id -Encryption EncryptionAtRestWithCustomerManagedKey -KeyName $env.Keyname -KeyVaultUri $env.KeyvaultUri -EncryptionUserAssignedIdentity $env.Useridentity.Id -ProtocolType Iscsi
         $volGroup.Name | Should -Be $volGroupName3
         $volGroup.Encryption | Should -Be "EncryptionAtRestWithCustomerManagedKey"
         $volGroup.IdentityType | Should -Be "UserAssigned"
@@ -53,7 +53,7 @@ Describe 'New-AzElasticSanVolumeGroup' {
         $volGroup.Encryption | Should -Be "EncryptionAtRestWithPlatformKey"
         $volGroup.ProtocolType | Should -Be "Iscsi"
 
-        $volGroup = Update-AzElasticSanVolumeGroup -ResourceGroupName $env.ResourceGroupName -ElasticSanName $env.ElasticSanName1 -Name $volGroupName3 -IdentityType 'SystemAssigned' -EnforceDataIntegrityCheckForIscsi $false
+        $volGroup = Update-AzElasticSanVolumeGroup -ResourceGroupName $env.ResourceGroupName -ElasticSanName $env.ElasticSanName1 -Name $volGroupName3 -EnableSystemAssignedIdentity -EnforceDataIntegrityCheckForIscsi $false
         $volGroup.IdentityType | Should -Be "SystemAssigned"
         $volGroup.EnforceDataIntegrityCheckForIscsi | Should -Be $false
 

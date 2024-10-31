@@ -39,8 +39,8 @@ title: ElasticSan
 # For new RP, the version is 0.1.0
 module-version: 0.3.0
 subject-prefix: $(service-name)
-disable-transform-identity-type: true
-flatten-userassignedidentity: false
+# disable-transform-identity-type: true
+# flatten-userassignedidentity: false
 
 enable-parent-pipeline-input: true
 

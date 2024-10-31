@@ -16,30 +16,30 @@ Update an VolumeGroup.
 ```
 Update-AzElasticSanVolumeGroup -ElasticSanName <String> -Name <String> -ResourceGroupName <String>
  [-SubscriptionId <String>] [-EnforceDataIntegrityCheckForIscsi <Boolean>] [-Encryption <String>]
- [-EncryptionUserAssignedIdentity <String>] [-IdentityType <String>] [-IdentityUserAssignedIdentityId <String>]
- [-KeyName <String>] [-KeyVaultUri <String>] [-KeyVersion <String>]
+ [-EncryptionUserAssignedIdentity <String>] [-EnableSystemAssignedIdentity <Boolean>]
+ [-UserAssignedIdentity <String[]>] [-KeyName <String>] [-KeyVaultUri <String>] [-KeyVersion <String>]
  [-NetworkAclsVirtualNetworkRule <IVirtualNetworkRule[]>] [-ProtocolType <String>] [-DefaultProfile <PSObject>]
- [-AsJob] [-NoWait] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-AsJob] [-NoWait] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### UpdateViaIdentityElasticSanExpanded
 ```
 Update-AzElasticSanVolumeGroup -Name <String> -ElasticSanInputObject <IElasticSanIdentity>
  [-EnforceDataIntegrityCheckForIscsi <Boolean>] [-Encryption <String>]
- [-EncryptionUserAssignedIdentity <String>] [-IdentityType <String>] [-IdentityUserAssignedIdentityId <String>]
- [-KeyName <String>] [-KeyVaultUri <String>] [-KeyVersion <String>]
+ [-EncryptionUserAssignedIdentity <String>] [-EnableSystemAssignedIdentity <Boolean>]
+ [-UserAssignedIdentity <String[]>] [-KeyName <String>] [-KeyVaultUri <String>] [-KeyVersion <String>]
  [-NetworkAclsVirtualNetworkRule <IVirtualNetworkRule[]>] [-ProtocolType <String>] [-DefaultProfile <PSObject>]
- [-AsJob] [-NoWait] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-AsJob] [-NoWait] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### UpdateViaIdentityExpanded
 ```
 Update-AzElasticSanVolumeGroup -InputObject <IElasticSanIdentity>
  [-EnforceDataIntegrityCheckForIscsi <Boolean>] [-Encryption <String>]
- [-EncryptionUserAssignedIdentity <String>] [-IdentityType <String>] [-IdentityUserAssignedIdentityId <String>]
- [-KeyName <String>] [-KeyVaultUri <String>] [-KeyVersion <String>]
+ [-EncryptionUserAssignedIdentity <String>] [-EnableSystemAssignedIdentity <Boolean>]
+ [-UserAssignedIdentity <String[]>] [-KeyName <String>] [-KeyVaultUri <String>] [-KeyVersion <String>]
  [-NetworkAclsVirtualNetworkRule <IVirtualNetworkRule[]>] [-ProtocolType <String>] [-DefaultProfile <PSObject>]
- [-AsJob] [-NoWait] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-AsJob] [-NoWait] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -288,6 +288,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -EnableSystemAssignedIdentity
+Decides if enable a system assigned identity for the resource.
+
+```yaml
+Type: System.Nullable`1[System.Boolean]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Encryption
 Type of encryption
 
@@ -323,37 +338,6 @@ A boolean indicating whether or not Data Integrity Check is enabled
 
 ```yaml
 Type: System.Boolean
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IdentityType
-The identity type.
-
-```yaml
-Type: System.String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IdentityUserAssignedIdentityId
-Gets or sets a list of key value pairs that describe the set of User Assigned identities that will be used with this volume group.
-The key is the ARM resource identifier of the identity.
-
-```yaml
-Type: System.String
 Parameter Sets: (All)
 Aliases:
 
@@ -471,6 +455,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: System.Management.Automation.ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ProtocolType
 Type of storage target
 
@@ -513,6 +512,22 @@ Aliases:
 Required: False
 Position: Named
 Default value: (Get-AzContext).Subscription.Id
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UserAssignedIdentity
+The array of user assigned identities associated with the resource.
+The elements in array will be ARM resource ids in the form: '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}.'
+
+```yaml
+Type: System.String[]
+Parameter Sets: (All)
+Aliases: IdentityUserAssignedIdentityId
+
+Required: False
+Position: Named
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
