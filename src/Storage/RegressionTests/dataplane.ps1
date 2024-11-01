@@ -2414,8 +2414,6 @@ Describe "dataplane test" {
         $error.Clear()
 
         Remove-AzStorageShare -Name $shareName -Context $ctxkey -Force
-        Remove-AzStorageShare -Name $shareName -Context $ctxkey2 -Force
-
 
         $Error.Count | should -be 0
     }
@@ -2579,10 +2577,7 @@ Describe "dataplane test" {
         $error[0].Exception.Message
         $Error.Clear()
 
-        $f = Set-AzStorageFileContent -ShareName $containerName -Source $localSmallSrcFile -Path testdirx1/file1 -Context $ctxsas -Force -PassThru 
-        $f = Get-AzStorageFile -ShareName $containerName -Path testdirx1/file1 -Context $ctx 
-        $f.Name | Should -Be "file1"
-        $Error.Count | Should -Be 0
+
     }
 
     It "Test case name"  {

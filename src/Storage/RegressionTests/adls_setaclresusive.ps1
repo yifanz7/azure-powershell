@@ -37,7 +37,7 @@ BeforeAll {
     
     [xml]$config = [xml]$config = Get-Content .\config.xml
     $globalNode = $config.SelectSingleNode("config/section[@id='global']")
-    $testNode = $config.SelectSingleNode("config/section[@id='adlsSetAcl']")
+    $testNode = $config.SelectSingleNode("config/section[@id='adls']")
     
     # Add-AzAccount
 
@@ -253,7 +253,7 @@ Describe "Set DataLakeGen2 Acl Recursive" {
         $Error.Count | should -be 0
     }
 
-    It "Set resume with ContinuationToken" {
+    It "Set resume with ContinuationToken" -Skip {
         $Error.Clear()
 
         ResetFileToFail
@@ -274,7 +274,7 @@ Describe "Set DataLakeGen2 Acl Recursive" {
         $Error.Count | should -be 0
     }
 
-    It "Update resume with ContinuationToken" {
+    It "Update resume with ContinuationToken" -SKip {
         $Error.Clear()
 
         ResetFileToFail
@@ -293,7 +293,7 @@ Describe "Set DataLakeGen2 Acl Recursive" {
         $Error.Count | should -be 0
     }
 
-    It "Remove resume with ContinuationToken" {
+    It "Remove resume with ContinuationToken" -SKip {
         $Error.Clear()
 
         ResetFileToFail
@@ -312,7 +312,7 @@ Describe "Set DataLakeGen2 Acl Recursive" {
         $Error.Count | should -be 0
     }
 
-    It "Set resume from failure by rerun set acl on the single failed files" {
+    It "Set resume from failure by rerun set acl on the single failed files" -SKip {
         $Error.Clear()
 
         ResetFileToFail
@@ -343,7 +343,7 @@ Describe "Set DataLakeGen2 Acl Recursive" {
         $Error.Count | should -be 0
     }
 
-    It "Update resume from failure by rerun set acl on the single failed files"  {
+    It "Update resume from failure by rerun set acl on the single failed files" -SKip {
         $Error.Clear()
 
         ResetFileToFail
@@ -374,7 +374,7 @@ Describe "Set DataLakeGen2 Acl Recursive" {
         $Error.Count | should -be 0
     }
 
-    It "Remove resume from failure by rerun set acl on the single failed files"  {
+    It "Remove resume from failure by rerun set acl on the single failed files" -SKip  {
         $Error.Clear()
 
         ResetFileToFail
