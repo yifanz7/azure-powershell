@@ -17,7 +17,7 @@ BeforeAll {
     #$cred = New-Object System.Management.Automation.PSCredential ($globalNode.applicationId, $secpasswd)
     #Add-AzAccount -ServicePrincipal -Tenant $globalNode.tenantId -SubscriptionId $globalNode.subscriptionId -Credential $cred 
 
-    # COnnect-AzAccount
+    # Connect-AzAccount
     $ctxoauth1 = New-AzStorageContext -StorageAccountName $storageAccountName
     $ctxoauth2 = New-AzStorageContext -StorageAccountName $storageAccountName2
 
@@ -2414,8 +2414,6 @@ Describe "dataplane test" {
         $error.Clear()
 
         Remove-AzStorageShare -Name $shareName -Context $ctxkey -Force
-        Remove-AzStorageShare -Name $shareName -Context $ctxkey2 -Force
-
 
         $Error.Count | should -be 0
     }
@@ -2563,6 +2561,24 @@ Describe "dataplane test" {
         $Error.Count | should -be 0
     }
 
+    It "Upload file with write only SAS" {
+        $Error.Clear()
+        $sas = New-AzStorageAccountSASToken -Service File -ResourceType Container,Object,Service -Permission wc -ExpiryTime (Get-Date).AddDays(10) -Context $ctx 
+        $ctxsas = New-AzStorageContext -StorageAccountName $storageAccountName -SasToken $sas 
+
+        New-AzStorageDirectory -ShareName $containerName -Path testdirx1 -Context $ctx
+
+        $f = Set-AzStorageFileContent -ShareName $containerName -Source $localSmallSrcFile -Path testdirx1/file1. -Context $ctxsas -Force
+        $f = Get-AzStorageFile -ShareName $containerName -Path testdirx1/file1. -Context $ctx 
+        $f.Name | Should -Be file1. 
+        $Error.Count | Should -Be 0
+
+        $f = Set-AzStorageFileContent -ShareName $containerName -Source $localSmallSrcFile -Path testdirx1 -Context $ctxsas -Force -PassThru -ErrorAction SilentlyContinue
+        $error[0].Exception.Message
+        $Error.Clear()
+
+
+    }
 
     It "Test case name"  {
         $Error.Clear()    
