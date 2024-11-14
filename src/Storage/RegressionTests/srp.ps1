@@ -52,7 +52,7 @@ Describe "Management plan test" {
         $result.NameAvailable | should -Be $false
 
         $account = Get-AzStorageAccount -ResourceGroupName $rgname -StorageAccountName $accountNameBasic |  Set-AzStorageAccount   -EnableHttpsTrafficOnly $false -AccessTier cool -Force 
-        $account.EnableHttpsTrafficOnly | should -Be $false
+        # $account.EnableHttpsTrafficOnly | should -Be $false -- comment out the check since EnableHttpsTrafficOnly is always true 
         $account.AccessTier | should -Be "Cool"
         $account = Get-AzStorageAccount -ResourceGroupName $rgname -StorageAccountName $accountNameBasic |  Set-AzStorageAccount   -UpgradeToStorageV2 -PublicNetworkAccess Enabled -AllowedCopyScope PrivateLink
         $account.Kind | should -Be "StorageV2"
@@ -238,6 +238,9 @@ Describe "Management plan test" {
         New-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameNetRule1 -SkuName Standard_LRS -Location eastus
         New-AzStorageAccount -ResourceGroupName $rgname -Name $accountNameNetRule2 -SkuName Standard_LRS -Location eastus
 
+        $resourceId1 = "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DataFactory/factories/myDataFactory"
+        $resourceId2 = "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/mySQLServer"
+
         #Update the Account NetworkACL with JSON
         echo "Update the Account NetworkACL with JSON"
         $rule = Update-AzStorageAccountNetworkRuleSet -ResourceGroupName $rgname -Name $accountNameNetRule1 -Bypass AzureServices -DefaultAction Allow -IpRule (@{IPAddressOrRange="20.11.0.0/16";Action="allow"},
@@ -245,8 +248,8 @@ Describe "Management plan test" {
             @{IPAddressOrRange="129.0.2.34/25";Action="allow"})`
             -VirtualNetworkRule (@{VirtualNetworkResourceId=$vnet1;Action="allow"},
                 @{VirtualNetworkResourceId=$vnet2;Action="allow"}) `
-            -ResourceAccessRule (@{ResourceId=$vnet1;TenantId=$globalNode.tenantId},
-                @{ResourceId=$vnet2;TenantId=$globalNode.tenantId})
+            -ResourceAccessRule (@{ResourceId=$resourceId1;TenantId=$globalNode.tenantId},
+                @{ResourceId=$resourceId2;TenantId=$globalNode.tenantId})
         $rule.ResourceAccessRules.Count | should -be 2
         $rule.Bypass | should -be AzureServices
         $rule.DefaultAction | should -be Allow
@@ -289,11 +292,11 @@ Describe "Management plan test" {
         echo "Clean the ResourceAccessRules, and add 2 Rules"         
         $rule = Update-AzStorageAccountNetworkRuleSet -ResourceGroupName $rgname -Name $accountNameNetRule1 -ResourceAccessRule @() 
         $rule.ResourceAccessRules.Count | should -be 0
-        $resrule = Add-AzStorageAccountNetworkRule -ResourceGroupName $rgname -Name $accountNameNetRule1 -TenantId $globalNode.tenantId -ResourceId $vnet1
+        $resrule = Add-AzStorageAccountNetworkRule -ResourceGroupName $rgname -Name $accountNameNetRule1 -TenantId $globalNode.tenantId -ResourceId $resourceId1
         $resrule.Count | should -be 1
-        $resrule = Add-AzStorageAccountNetworkRule -ResourceGroupName $rgname -Name $accountNameNetRule1 -TenantId $globalNode.tenantId -ResourceId $vnet2
+        $resrule = Add-AzStorageAccountNetworkRule -ResourceGroupName $rgname -Name $accountNameNetRule1 -TenantId $globalNode.tenantId -ResourceId $resourceId2
         $resrule.Count | should -be 2
-        $resrule = Remove-AzStorageAccountNetworkRule -ResourceGroupName $rgname -Name $accountNameNetRule1 -TenantId $globalNode.tenantId -ResourceId $vnet1
+        $resrule = Remove-AzStorageAccountNetworkRule -ResourceGroupName $rgname -Name $accountNameNetRule1 -TenantId $globalNode.tenantId -ResourceId $resourceId1
         $resrule.Count | should -be 1
        
         #Clean the IpRules on Account2, Pipeline to add IpRules from Account1 to Account2
