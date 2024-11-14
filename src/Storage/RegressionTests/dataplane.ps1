@@ -275,6 +275,7 @@ Describe "dataplane test" {
         $Error.Clear()
 
         Set-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName -AllowBlobPublicAccess $true
+        sleep 120 # Set sleep time to 2 min to make sure AllowBlobPublicAccess becomes True
         ## regression test for Fix  Set-AzStorageContainerAcl can clean up the stored Access Policy
         New-AzStorageContainerStoredAccessPolicy -Container $containerName  -Policy 123 -Permission rw -Context $ctx
         New-AzStorageContainerStoredAccessPolicy -Container $containerName  -Policy 234 -Permission rwdl -Context $ctx
@@ -743,7 +744,9 @@ Describe "dataplane test" {
         New-AzStorageEncryptionScope -ResourceGroupName $resourceGroupName -StorageAccountName $storageAccountName -EncryptionScopeName $scopeName1 -StorageEncryption
         New-AzStorageEncryptionScope -ResourceGroupName $resourceGroupName -StorageAccountName $storageAccountName -EncryptionScopeName $scopeName2 -StorageEncryption
         Set-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName -AllowBlobPublicAccess $true
-        sleep 10 
+
+        sleep 120 # Make sleep time 2 min to make sure AllowBlobPublicAccess is True
+        
         try{
 
             $containerName_es = $containerName + "es"
@@ -2388,6 +2391,8 @@ Describe "dataplane test" {
         Set-AzStorageServiceMetricsProperty -ServiceType File -MetricsType Hour -Context $ctxoauth -ErrorAction SilentlyContinue
         $error[0].Exception.Message | should -BeLike "*Server failed to authenticate the request. Make sure the value of Authorization header is formed correctly including the signature.*"
 
+        $error.Clear()
+
         # should fail since file sas can only create with sharedkey 
         $file | New-AzStorageFileSASToken -Permission rw -ErrorAction SilentlyContinue
         New-AzStorageFileSASToken -ShareName $shareName -Path $file.ShareFileClient.Path -Permission rw -Context $ctxoauth -ErrorAction SilentlyContinue
@@ -2400,7 +2405,7 @@ Describe "dataplane test" {
         $error.Count | should -be 8
         foreach ($e in $error)
         {
-            $e.Exception.Message | should -BeLike "*Create File service SAS only supported with SharedKey credentail.*"
+            $e.Exception.Message | should -BeLike "*Create File service SAS only supported with SharedKey credential.*"
         }
         $error.Clear()
 
