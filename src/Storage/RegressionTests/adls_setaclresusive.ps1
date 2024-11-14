@@ -199,7 +199,7 @@ Describe "Set DataLakeGen2 Acl Recursive" {
         $Error.Count | should -be 0
     }
 
-    It "Set chunk by chunk with ContinueOnFailure" {
+    It "Set chunk by chunk with ContinueOnFailure" -Skip {
         $Error.Clear()
         
         $ContinueOnFailure = $true

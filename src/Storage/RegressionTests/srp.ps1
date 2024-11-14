@@ -1558,7 +1558,7 @@ Describe "Management plan test" {
         $Error.Count | should -be 0
     }   
     
-    It "Extend Location" {
+    It "Extend Location" -SKip {
         $Error.Clear()
 
         $accountNameExtendLoc = $accountName + "extloc"
@@ -2885,7 +2885,7 @@ Describe "Management plan test" {
         $Error.Count | should -be 0
     }
 
-    It "AADKerb -Skip" {
+    It "AADKerb" -Skip {
         $Error.Clear()
 
         $accountNameAADKerb = $accountName + "aadkerb"

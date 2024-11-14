@@ -2098,7 +2098,7 @@ Describe "dataplane test" {
         $ctxkey2 = (Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $accountname2).Context
 
         New-AzStorageShare -Name $shareName -Context $ctxkey
-        Set-AzStorageFileContent -ShareName $shareName -Source $localSrcFile -Path $filename -Context $ctxoauth
+        Set-AzStorageFileContent -ShareName $shareName -Source $localSrcFile -Path $filename -Context $ctxoauth -Force
         New-AzStorageDirectory -ShareName $shareName -Path $dirname -Context $ctxoauth
 
         # Share object w/o fetching properties with OAuth 
@@ -2412,7 +2412,7 @@ Describe "dataplane test" {
     It "Trailing dot"  {
         $Error.Clear()     
 
-        $sharename = "testshare1"
+        $sharename = "testsharedot"
         $share = New-AzStorageShare -Name $sharename -Context $ctx 
         $share = Get-AzStorageShare -Name $sharename -Context $ctx 
 
