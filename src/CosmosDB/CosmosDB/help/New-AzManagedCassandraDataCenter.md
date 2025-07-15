@@ -18,7 +18,8 @@ New-AzManagedCassandraDatacenter -Location <String> -DelegatedSubnetId <String> 
  [-DiskCapacity <Int32>] [-ManagedDiskCustomerKeyUri <String>] [-UseAvailabilityZone]
  -ResourceGroupName <String> -ClusterName <String> -DatacenterName <String> [-NodeCount <Int32>]
  [-Base64EncodedCassandraYamlFragment <String>] [-BackupStorageCustomerKeyUri <String>]
- [-DefaultProfile <IAzureContextContainer>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-DefaultProfile <IAzureContextContainer>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### ByParentObjectParameterSet
@@ -27,17 +28,18 @@ New-AzManagedCassandraDatacenter -Location <String> -DelegatedSubnetId <String>
  -ParentObject <PSClusterResource> [-Sku <String>] [-DiskCapacity <Int32>]
  [-ManagedDiskCustomerKeyUri <String>] [-UseAvailabilityZone] [-NodeCount <Int32>]
  [-Base64EncodedCassandraYamlFragment <String>] [-BackupStorageCustomerKeyUri <String>]
- [-DefaultProfile <IAzureContextContainer>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-DefaultProfile <IAzureContextContainer>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-The **New-AzManagedCassandraDataCenter** cmdlet creates a new managed Cassandra data center.
+The **New-AzManagedCassandraDatacenter** cmdlet creates a new managed Cassandra data center.
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-New-AzManagedCassandraDataCenter `
+New-AzManagedCassandraDatacenter `
  -ResourceGroupName "resourceGroupName" `
  -ClusterName "clusterName" `
  -DataCenterName "dataCenterName" `

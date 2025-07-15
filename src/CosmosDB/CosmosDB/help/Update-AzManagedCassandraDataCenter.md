@@ -16,38 +16,42 @@ Update an existing Azure Managed Instances for Apache Cassandra data center.
 ```
 Update-AzManagedCassandraDatacenter -ResourceGroupName <String> -ClusterName <String> -DatacenterName <String>
  [-NodeCount <Int32>] [-Base64EncodedCassandraYamlFragment <String>] [-BackupStorageCustomerKeyUri <String>]
- [-DefaultProfile <IAzureContextContainer>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-DefaultProfile <IAzureContextContainer>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### ByResourceIdParameterSet
 ```
 Update-AzManagedCassandraDatacenter -ResourceId <String> [-NodeCount <Int32>]
  [-Base64EncodedCassandraYamlFragment <String>] [-BackupStorageCustomerKeyUri <String>]
- [-DefaultProfile <IAzureContextContainer>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-DefaultProfile <IAzureContextContainer>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### ByObjectParameterSet
 ```
 Update-AzManagedCassandraDatacenter -InputObject <PSDataCenterResource> [-NodeCount <Int32>]
  [-Base64EncodedCassandraYamlFragment <String>] [-BackupStorageCustomerKeyUri <String>]
- [-DefaultProfile <IAzureContextContainer>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-DefaultProfile <IAzureContextContainer>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### ByParentObjectParameterSet
 ```
 Update-AzManagedCassandraDatacenter -ParentObject <PSClusterResource> [-NodeCount <Int32>]
  [-Base64EncodedCassandraYamlFragment <String>] [-BackupStorageCustomerKeyUri <String>]
- [-DefaultProfile <IAzureContextContainer>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-DefaultProfile <IAzureContextContainer>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-The **Update-AzManagedCassandraDataCenter** cmdlet updates an existing managed Cassandra data center.
+The **Update-AzManagedCassandraDatacenter** cmdlet updates an existing managed Cassandra data center.
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-Update-AzManagedCassandraDataCenter `
+Update-AzManagedCassandraDatacenter `
  -ResourceGroupName "resourceGroupName" `
  -ClusterName "clusterName" `
  -DataCenterName "dataCenterName" `
