@@ -25,12 +25,14 @@ namespace Microsoft.Azure.Commands.Management.Storage.Models
                 this.DirectoryServiceOptions = auth.DirectoryServiceOptions;
                 this.ActiveDirectoryProperties = auth.ActiveDirectoryProperties != null ? new PSActiveDirectoryProperties(auth.ActiveDirectoryProperties) : null;
                 this.DefaultSharePermission = auth.DefaultSharePermission;
+                this.SmbOAuthSettings = auth.SmbOAuthSettings != null ? new PSSmbOAuthSettings(auth.SmbOAuthSettings) : null;
             }
         }
         // Gets or sets indicates the directory service used. Possible values include: 'None','AADDS', 'AD'
         public string DirectoryServiceOptions { get; set; }
         public PSActiveDirectoryProperties ActiveDirectoryProperties { get; set; }
         public string DefaultSharePermission { get; set; }
+        public PSSmbOAuthSettings SmbOAuthSettings { get; set; }
     }
 
     public class PSActiveDirectoryProperties
@@ -57,5 +59,17 @@ namespace Microsoft.Azure.Commands.Management.Storage.Models
         public string AzureStorageSid { get; set; }
         public string SamAccountName { get; set; }
         public string AccountType { get; set; }
+    }
+
+    public class PSSmbOAuthSettings
+    {
+        public PSSmbOAuthSettings(SmbOAuthSettings settings)
+        {
+            if (settings != null)
+            {
+                IsSmbOAuthEnabled = settings.IsSmbOAuthEnabled;
+            }
+        }
+        public bool? IsSmbOAuthEnabled { get; set; }
     }
 }
