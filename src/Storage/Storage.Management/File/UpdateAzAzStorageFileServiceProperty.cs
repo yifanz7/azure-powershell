@@ -22,6 +22,7 @@ namespace Microsoft.Azure.Commands.Management.Storage
     using System.Management.Automation;
     using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
     using Microsoft.Azure.Management.Internal.Resources.Utilities.Models;
+    using Microsoft.Azure.Management.Monitor.Version2018_09_01.Models;
 
     /// <summary>
     /// Modify Azure Storage service properties
@@ -162,6 +163,38 @@ namespace Microsoft.Azure.Commands.Management.Storage
             IgnoreCase = true)]
         public string[] SmbKerberosTicketEncryption { get; set; }
 
+        [Parameter(
+            Mandatory = false,
+            HelpMessage = "Gets or sets SMB protocol versions supported by server. Valid values are SMB2.1, SMB3.0, SMB3.1.1.")]
+        public bool EnableSmbEncryptionInTransit
+        {
+            get
+            {
+                return enableSmbEncryptionInTransit is null ? false : enableSmbEncryptionInTransit.Value;
+            }
+            set
+            {
+                enableSmbEncryptionInTransit = value;
+            }
+        }
+        private bool? enableSmbEncryptionInTransit = null;
+
+        [Parameter(
+            Mandatory = false,
+            HelpMessage = "Gets or sets SMB protocol versions supported by server. Valid values are SMB2.1, SMB3.0, SMB3.1.1.")]
+        public bool EnableNfsEncryptionInTransit
+        {
+            get
+            {
+                return enableNfsEncryptionInTransit is null ? false : enableNfsEncryptionInTransit.Value;
+            }
+            set
+            {
+                enableNfsEncryptionInTransit = value;
+            }
+        }
+        private bool? enableNfsEncryptionInTransit = null;
+
         [Parameter(Mandatory = false,
             HelpMessage = "Specifies CORS rules for the File service.")]
         [ValidateNotNull]
@@ -249,6 +282,17 @@ namespace Microsoft.Azure.Commands.Management.Storage
                     {
                         protocolSettings.Smb.Multichannel = new Multichannel();
                         protocolSettings.Smb.Multichannel.Enabled = this.enableSmbMultichannel;
+                    }
+                    if (this.enableSmbEncryptionInTransit != null)
+                    {
+                        protocolSettings.Smb.EncryptionInTransit = new EncryptionInTransit(this.enableSmbEncryptionInTransit);
+                    }
+                    if (this.enableNfsEncryptionInTransit != null)
+                    {
+                        protocolSettings.Nfs = new NfsSetting
+                        {
+                            EncryptionInTransit = new EncryptionInTransit(this.enableNfsEncryptionInTransit)
+                        };
                     }
                 }
                 fileServiceProperties.ProtocolSettings = protocolSettings;

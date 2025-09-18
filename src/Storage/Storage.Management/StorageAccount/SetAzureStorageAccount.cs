@@ -21,6 +21,7 @@ using Microsoft.WindowsAzure.Commands.Common.CustomAttributes;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.Management.Automation;
 using StorageModels = Microsoft.Azure.Management.Storage.Models;
 
@@ -401,6 +402,23 @@ namespace Microsoft.Azure.Commands.Management.Storage
 
         [Parameter(
             Mandatory = false,
+            HelpMessage = "Enable Azure Files Active Directory Domain Service Authentication for the storage account.")]
+        [ValidateNotNullOrEmpty]
+        public bool EnableSmbOAuth
+        {
+            get
+            {
+                return enableSmbOAuth.Value;
+            }
+            set
+            {
+                enableSmbOAuth = value;
+            }
+        }
+        private bool? enableSmbOAuth = null;
+
+        [Parameter(
+            Mandatory = false,
             HelpMessage = "Allow or disallow anonymous access to all blobs or containers in the storage account.")]
         [ValidateNotNullOrEmpty]
         public bool AllowBlobPublicAccess
@@ -587,6 +605,20 @@ namespace Microsoft.Azure.Commands.Management.Storage
         [PSArgumentCompleter("PrivateLink", "AAD")]
         [ValidateNotNullOrEmpty]
         public string AllowedCopyScope { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            HelpMessage = "Zones")]
+        [ValidateNotNullOrEmpty]
+        public string[] Zone { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            HelpMessage = "Specify the type of endpoint. Set this to AzureDNSZone to create a large number of accounts in a single subscription, " +
+            "which creates accounts in an Azure DNS Zone and the endpoint URL will have an alphanumeric DNS Zone identifier. Possible values include: 'Standard', 'AzureDnsZone'.")]
+        [PSArgumentCompleter("None", "Any")]
+        [ValidateNotNullOrEmpty]
+        public string ZonePlacementPolicy { get; set; }
 
         [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
         public SwitchParameter AsJob { get; set; }
@@ -869,6 +901,25 @@ namespace Microsoft.Azure.Commands.Management.Storage
                         }
                         updateParameters.AzureFilesIdentityBasedAuthentication.DefaultSharePermission = this.DefaultSharePermission;
                     }
+                    if (this.enableSmbOAuth != null)
+                    {
+                        if (this.OriginStorageAccountProperties.AzureFilesIdentityBasedAuthentication == null)
+                        {
+                            updateParameters.AzureFilesIdentityBasedAuthentication = new AzureFilesIdentityBasedAuthentication
+                            {
+                                DirectoryServiceOptions = DirectoryServiceOptions.None,
+                            };
+                        }
+                        else
+                        {
+                            updateParameters.AzureFilesIdentityBasedAuthentication = this.OriginStorageAccountProperties.AzureFilesIdentityBasedAuthentication;
+                        }
+
+                        updateParameters.AzureFilesIdentityBasedAuthentication.SmbOAuthSettings = new SmbOAuthSettings
+                        {
+                            IsSmbOAuthEnabled = this.enableSmbOAuth.Value
+                        };
+                    }
                     if (this.EnableLargeFileShare.IsPresent)
                     {
                         updateParameters.LargeFileSharesState = LargeFileSharesState.Enabled;
@@ -946,6 +997,14 @@ namespace Microsoft.Azure.Commands.Management.Storage
                     if (this.AllowedCopyScope != null)
                     {
                         updateParameters.AllowedCopyScope = this.AllowedCopyScope;
+                    }
+                    if (this.Zone != null)
+                    {
+                        updateParameters.Zones = new List<string>(this.Zone);
+                    }
+                    if (this.ZonePlacementPolicy != null)
+                    {
+                        updateParameters.Placement = new Placement(this.ZonePlacementPolicy);
                     }
 
                     var updatedAccountResponse = this.StorageClient.StorageAccounts.Update(
